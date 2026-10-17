@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <!--
     Project: SonaFrame
     File: index.html
-    Version: 0.2.0
+    Version: 0.3.0
     Purpose: Main application and MIDI workspace.
     -->
 
@@ -22,8 +22,10 @@
 
     <meta
         name="description"
-        content="SonaFrame - MIDI tools, music visualization, lyrics, tuning, and MV creation."
+        content="SonaFrame is a music creation workspace for MIDI tools, lyrics, tuning, visualization, and music video production."
     >
+
+    <meta name="application-name" content="SonaFrame">
 
     <title>SonaFrame — Music Creation Tools</title>
 
@@ -39,6 +41,8 @@
 </head>
 
 <body>
+
+    <!-- HEADER -->
 
     <header class="app-header">
 
@@ -62,7 +66,7 @@
             role="status"
             aria-live="polite"
         >
-            Memeriksa...
+            Checking connection...
         </span>
 
     </header>
@@ -84,8 +88,9 @@
             </h1>
 
             <p class="hero-description">
-                Alat kreatif untuk MIDI, lirik, tuning,
-                visualisasi musik, dan pembuatan MV.
+                A creative workspace for MIDI,
+                lyrics, vocal tuning, music visualization,
+                and music video production.
             </p>
 
             <div class="hero-actions">
@@ -95,7 +100,7 @@
                     class="button button-primary"
                     type="button"
                 >
-                    Mulai Proyek
+                    Start a Project
                 </button>
 
                 <button
@@ -103,7 +108,7 @@
                     class="button button-secondary"
                     type="button"
                 >
-                    Tentang
+                    About SonaFrame
                 </button>
 
             </div>
@@ -119,17 +124,19 @@
 
                 <div>
                     <p class="eyebrow">WORKSPACE</p>
-                    <h2>Ruang Kreatif</h2>
+                    <h2>Creative Tools</h2>
                 </div>
 
                 <span class="version-label">
-                    Prototype 0.2.0
+                    Prototype 0.3.0
                 </span>
 
             </div>
 
 
             <div class="feature-grid">
+
+                <!-- MIDI TOOLS -->
 
                 <article class="feature-card">
 
@@ -143,8 +150,9 @@
                     <h3>MIDI Tools</h3>
 
                     <p>
-                        Impor MIDI dan periksa informasi
-                        dasar lagu langsung di browser.
+                        Import MIDI files and inspect
+                        basic song information directly
+                        in your browser.
                     </p>
 
                     <button
@@ -152,11 +160,13 @@
                         class="button button-primary"
                         type="button"
                     >
-                        Buka MIDI Tools
+                        Open MIDI Tools
                     </button>
 
                 </article>
 
+
+                <!-- MIDI VISUALIZER -->
 
                 <article class="feature-card">
 
@@ -170,16 +180,19 @@
                     <h3>MIDI Visualizer</h3>
 
                     <p>
-                        Mengubah nada MIDI menjadi visual
-                        piano roll atau falling notes.
+                        Transform MIDI notes into
+                        piano roll visualizations
+                        or falling-note animations.
                     </p>
 
                     <span class="feature-status">
-                        Direncanakan
+                        Planned
                     </span>
 
                 </article>
 
+
+                <!-- LYRIC ASSISTANT -->
 
                 <article class="feature-card">
 
@@ -193,16 +206,19 @@
                     <h3>Lyric Assistant</h3>
 
                     <p>
-                        Membantu mengatur lirik,
-                        mora, suku kata, dan pemenggalan.
+                        Organize lyrics, mora,
+                        syllables, and word
+                        segmentation.
                     </p>
 
                     <span class="feature-status">
-                        Direncanakan
+                        Planned
                     </span>
 
                 </article>
 
+
+                <!-- TUNING ASSISTANT -->
 
                 <article class="feature-card">
 
@@ -216,16 +232,19 @@
                     <h3>Tuning Assistant</h3>
 
                     <p>
-                        Merencanakan nada, durasi,
-                        dan ekspresi vokal.
+                        Plan vocal pitches,
+                        note durations, and
+                        expressive parameters.
                     </p>
 
                     <span class="feature-status">
-                        Direncanakan
+                        Planned
                     </span>
 
                 </article>
 
+
+                <!-- MV MAKER -->
 
                 <article class="feature-card">
 
@@ -236,19 +255,22 @@
                         ▷
                     </div>
 
-                    <h3>MV Maker</h3>
+                    <h3>Music Video Maker</h3>
 
                     <p>
-                        Merencanakan MV dari MIDI,
-                        ilustrasi, dan teks lirik.
+                        Build music video projects
+                        using MIDI, illustrations,
+                        and lyric text.
                     </p>
 
                     <span class="feature-status">
-                        Direncanakan
+                        Planned
                     </span>
 
                 </article>
 
+
+                <!-- LOCAL PROJECTS -->
 
                 <article class="feature-card">
 
@@ -262,12 +284,13 @@
                     <h3>Local Projects</h3>
 
                     <p>
-                        Fondasi untuk menyimpan
-                        dan membuka proyek pengguna.
+                        Prepare, save, and reopen
+                        music projects directly
+                        on your device.
                     </p>
 
                     <span class="feature-status">
-                        Direncanakan
+                        Planned
                     </span>
 
                 </article>
@@ -289,14 +312,14 @@
 
                 <div>
                     <p class="eyebrow">PROJECT SETUP</p>
-                    <h2>Proyek Baru</h2>
+                    <h2>New Project</h2>
                 </div>
 
                 <button
                     id="close-panel-button"
                     class="icon-button"
                     type="button"
-                    aria-label="Tutup panel"
+                    aria-label="Close project panel"
                 >
                     ×
                 </button>
@@ -304,14 +327,14 @@
             </div>
 
             <p>
-                Fondasi proyek sudah disiapkan.
-                Fitur pembuatan proyek lengkap akan
-                ditambahkan pada tahap berikutnya.
+                The project foundation is ready.
+                Full project creation features
+                will be introduced in a future update.
             </p>
 
             <div class="notice">
-                Kamu bisa mulai dengan mengimpor MIDI
-                melalui menu MIDI Tools.
+                You can start by importing a MIDI
+                file through MIDI Tools.
             </div>
 
         </section>
@@ -336,7 +359,7 @@
                     id="close-midi-button"
                     class="icon-button"
                     type="button"
-                    aria-label="Tutup MIDI Tools"
+                    aria-label="Close MIDI Tools"
                 >
                     ×
                 </button>
@@ -345,15 +368,15 @@
 
 
             <p>
-                Pilih file MIDI dari penyimpanan HP
-                untuk memeriksa informasi lagu.
+                Select a MIDI file from your device
+                to inspect its song information.
             </p>
 
 
             <div class="notice">
-                Pemrosesan dirancang berlangsung
-                langsung di browser. File MIDI tidak
-                perlu diunggah ke server.
+                MIDI files are processed locally
+                in your browser. Your files do not
+                need to be uploaded to a server.
             </div>
 
 
@@ -363,7 +386,7 @@
                     for="midi-file-input"
                     class="midi-file-label"
                 >
-                    Pilih File MIDI
+                    Choose a MIDI File
                 </label>
 
                 <input
@@ -373,7 +396,7 @@
                 >
 
                 <p class="feature-status">
-                    Format yang didukung: .mid dan .midi
+                    Supported formats: .mid and .midi
                 </p>
 
             </div>
@@ -385,7 +408,7 @@
                 role="status"
                 aria-live="polite"
             >
-                Belum ada file MIDI yang dipilih.
+                No MIDI file selected.
             </div>
 
 
@@ -395,32 +418,32 @@
                 hidden
             >
 
-                <h3>Informasi MIDI</h3>
+                <h3>MIDI Information</h3>
 
                 <div class="midi-info-grid">
 
                     <div class="midi-info-card">
-                        <span>Nama file</span>
+                        <span>File Name</span>
                         <strong id="midi-file-name">-</strong>
                     </div>
 
                     <div class="midi-info-card">
-                        <span>Ukuran file</span>
+                        <span>File Size</span>
                         <strong id="midi-file-size">-</strong>
                     </div>
 
                     <div class="midi-info-card">
-                        <span>Format MIDI</span>
+                        <span>MIDI Format</span>
                         <strong id="midi-format">-</strong>
                     </div>
 
                     <div class="midi-info-card">
-                        <span>Jumlah track</span>
+                        <span>Track Count</span>
                         <strong id="midi-track-count">-</strong>
                     </div>
 
                     <div class="midi-info-card">
-                        <span>Jumlah nada</span>
+                        <span>Note Count</span>
                         <strong id="midi-note-count">-</strong>
                     </div>
 
@@ -430,7 +453,7 @@
                     </div>
 
                     <div class="midi-info-card">
-                        <span>Durasi</span>
+                        <span>Duration</span>
                         <strong id="midi-duration">-</strong>
                     </div>
 
@@ -445,9 +468,8 @@
 
 
             <div class="notice">
-                Catatan: informasi MIDI baru akan
-                ditampilkan setelah pembaca MIDI
-                diimplementasikan dan file berhasil dianalisis.
+                MIDI information will appear after
+                a file has been successfully analyzed.
             </div>
 
         </section>
@@ -465,14 +487,14 @@
 
                 <div>
                     <p class="eyebrow">ABOUT</p>
-                    <h2>Tentang SonaFrame</h2>
+                    <h2>About SonaFrame</h2>
                 </div>
 
                 <button
                     id="close-about-button"
                     class="icon-button"
                     type="button"
-                    aria-label="Tutup informasi"
+                    aria-label="Close information panel"
                 >
                     ×
                 </button>
@@ -480,21 +502,22 @@
             </div>
 
             <p>
-                SonaFrame adalah proyek aplikasi kreatif
-                untuk membantu proses pengolahan MIDI,
-                pembuatan visual musik, pengaturan lirik,
-                perencanaan tuning, dan pembuatan MV.
+                SonaFrame is a creative application
+                for MIDI processing, music visualization,
+                lyric organization, vocal tuning
+                planning, and music video production.
             </p>
 
             <p>
-                Aplikasi dirancang dengan prioritas
-                performa, kemudahan penggunaan,
-                dan dukungan perangkat dengan
-                sumber daya terbatas.
+                The application prioritizes
+                performance, usability, offline access,
+                and compatibility with devices
+                with limited resources.
             </p>
 
             <div class="notice">
-                Versi 0.2.0 — Pengembangan awal MIDI Tools.
+                Version 0.3.0 — MIDI Tools and
+                MIDI Merge development.
             </div>
 
         </section>
@@ -504,12 +527,12 @@
 
         <section class="project-note">
 
-            <h2>Dibangun bertahap.</h2>
+            <h2>Built step by step.</h2>
 
             <p>
-                Setiap fitur akan dikembangkan,
-                diuji, dan didokumentasikan sebelum
-                kita melanjutkan ke tahap berikutnya.
+                Every feature is developed,
+                tested, and documented before
+                moving on to the next stage.
             </p>
 
         </section>
@@ -517,11 +540,13 @@
     </main>
 
 
+    <!-- FOOTER -->
+
     <footer class="app-footer">
 
         <p>
             SonaFrame <span aria-hidden="true">·</span>
-            Version 0.2.0
+            Version 0.3.0
         </p>
 
         <p>
@@ -531,7 +556,10 @@
     </footer>
 
 
+    <!-- APPLICATION SCRIPTS -->
+
     <script src="app.js"></script>
+    <script src="midi-merge.js"></script>
 
 </body>
 </html>
