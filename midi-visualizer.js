@@ -1,53 +1,88 @@
 /*
 Project: SonaFrame
 File: midi-visualizer.js
-Version: 0.4.0
+Version: 0.5.0
 
-Stage 3: MIDI Visualizer
+Stage 3: Neon MIDI Visualizer
 
 Features:
-- Import MIDI files locally
-- Parse MIDI note events and tempo
-- Display a scrolling piano roll
-- Play, pause, and reset animation
-- Responsive canvas for mobile devices
+- Local MIDI import
+- Neon horizontal note lines
+- Centered playhead
+- Lightweight note pulse effects
+- Five color presets
+- Per-track opacity and scale
+- Local audio playback
+- Audio offset synchronization
+- Play, Pause, Reset
+- Responsive Canvas
 - No external libraries
 
-Limitations:
-- Visual animation only; no audio playback
-- Supports MIDI format 0 and 1
-- Supports PPQ timing, not SMPTE timing
+Supported:
+- MIDI format 0 and 1
+- PPQ timing
+- Local audio formats supported by the browser
+
+Performance:
+- Limited Canvas resolution
+- No external rendering libraries
 */
 
 (function () {
     "use strict";
 
     var MAX_FILE_SIZE = 50 * 1024 * 1024;
+    var MAX_NOTES = 100000;
+    var PIXELS_PER_SECOND = 90;
 
     var state = {
         notes: [],
+        tracks: [],
         duration: 0,
         currentTime: 0,
+        tempo: 120,
+
         playing: false,
         animationId: null,
         lastFrame: 0,
+
         canvas: null,
         context: null,
         panel: null,
-        fileInput: null,
         status: null,
+        fileInput: null,
+
         playButton: null,
         pauseButton: null,
         resetButton: null,
+
         speedInput: null,
         speedLabel: null,
-        fileName: null,
-        tempo: 120,
+
+        audioInput: null,
+        audio: null,
+        audioURL: null,
+        audioName: null,
+        audioOffset: null,
+
+        colorPreset: null,
+        trackControls: null,
+
         minPitch: 36,
-        maxPitch: 84
+        maxPitch: 84,
+
+        effects: [],
+        lastEffectCheck: 0,
+
+        settings: {},
+        loaded: false
     };
 
-    function element(tag, className, text) {
+    /* =====================================
+       ELEMENT HELPERS
+    ===================================== */
+
+    function el(tag, className, text) {
         var node = document.createElement(tag);
 
         if (className) {
@@ -61,10 +96,10 @@ Limitations:
         return node;
     }
 
-    function button(text, className) {
-        var node = element(
+    function makeButton(text, primary) {
+        var node = el(
             "button",
-            "sf-viz-button " + (className || ""),
+            "sf5-button" + (primary ? " sf5-primary" : ""),
             text
         );
 
@@ -79,172 +114,236 @@ Limitations:
         }
 
         state.status.textContent = message;
-        state.status.className = "sf-viz-status";
+
+        state.status.className = "sf5-status";
 
         if (type) {
-            state.status.classList.add("is-" + type);
+            state.status.classList.add("sf5-" + type);
         }
     }
 
+    function clamp(value, minimum, maximum) {
+        return Math.max(
+            minimum,
+            Math.min(maximum, value)
+        );
+    }
+
+    /* =====================================
+       STYLES
+    ===================================== */
+
     function addStyles() {
-        if (document.getElementById("sf-viz-styles")) {
+        if (document.getElementById("sf5-styles")) {
             return;
         }
 
         var style = document.createElement("style");
 
-        style.id = "sf-viz-styles";
+        style.id = "sf5-styles";
 
         style.textContent = `
-            .sf-viz-card {
+            .sf5-card {
                 margin-top: 18px;
             }
 
-            .sf-viz-panel {
-                margin-top: 16px;
+            .sf5-panel {
+                margin-top: 18px;
                 padding: 15px;
-                border: 1px solid var(--border, #2a354b);
-                border-radius: 16px;
-                background: var(--surface, #111827);
-                color: var(--text, #f1f5f9);
+                border: 1px solid #263447;
+                border-radius: 15px;
+                background: #050609;
+                color: #edf6ff;
+                overflow: hidden;
             }
 
-            .sf-viz-panel h2,
-            .sf-viz-panel h3 {
-                margin-top: 0;
+            .sf5-panel h2,
+            .sf5-panel h3 {
+                color: #f5f9ff;
             }
 
-            .sf-viz-description,
-            .sf-viz-help {
-                font-size: 13px;
-                line-height: 1.6;
-                color: var(--muted, #a6b1c4);
+            .sf5-description,
+            .sf5-help {
+                color: #9caac0;
+                font-size: 12px;
+                line-height: 1.7;
             }
 
-            .sf-viz-file {
+            .sf5-label {
                 display: block;
+                margin: 12px 0 6px;
+                color: #c9d8ee;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .sf5-file,
+            .sf5-select,
+            .sf5-number {
                 width: 100%;
+                min-height: 42px;
                 box-sizing: border-box;
-                margin: 12px 0;
-                padding: 12px;
-                border: 1px dashed var(--border, #2a354b);
-                border-radius: 10px;
-                color: inherit;
-                background: var(--surface-light, #192338);
+                padding: 10px;
+                border: 1px solid #29364a;
+                border-radius: 9px;
+                background: #0b0d13;
+                color: #eef6ff;
                 font: inherit;
+                font-size: 12px;
             }
 
-            .sf-viz-actions {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                margin: 12px 0;
+            .sf5-file {
+                margin: 5px 0;
             }
 
-            .sf-viz-button {
+            .sf5-button {
                 min-height: 42px;
                 padding: 9px 13px;
-                border: 1px solid var(--border, #2a354b);
-                border-radius: 10px;
-                background: var(--surface-light, #192338);
-                color: var(--text, #f1f5f9);
+                border: 1px solid #29364a;
+                border-radius: 9px;
+                background: #111722;
+                color: #eef6ff;
                 font: inherit;
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 700;
                 cursor: pointer;
             }
 
-            .sf-viz-primary {
-                background: var(--accent, #a78bfa);
-                color: #111827;
-                border-color: transparent;
+            .sf5-primary {
+                border-color: #49d9ff;
+                background: #102a38;
+                color: #7ce8ff;
             }
 
-            .sf-viz-button:disabled {
-                opacity: .45;
+            .sf5-button:disabled {
+                opacity: .4;
                 cursor: not-allowed;
             }
 
-            .sf-viz-status {
+            .sf5-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 7px;
                 margin: 12px 0;
-                padding: 11px;
-                border-radius: 9px;
-                background: var(--surface-light, #192338);
+            }
+
+            .sf5-status {
+                margin: 12px 0;
+                padding: 10px;
+                border: 1px solid #202b3b;
+                border-radius: 8px;
+                background: #090c12;
+                color: #b9c9df;
                 font-size: 12px;
                 line-height: 1.6;
                 overflow-wrap: anywhere;
             }
 
-            .sf-viz-status.is-error {
-                border: 1px solid #d55;
+            .sf5-error {
+                border-color: #b84b62;
+                color: #ffb8c6;
             }
 
-            .sf-viz-status.is-success {
-                border: 1px solid #3a8;
+            .sf5-success {
+                border-color: #287d75;
+                color: #9cf5dc;
             }
 
-            .sf-viz-canvas-wrap {
-                width: 100%;
+            .sf5-canvas-wrap {
                 margin-top: 14px;
                 overflow: hidden;
-                border: 1px solid var(--border, #2a354b);
+                border: 1px solid #1c2939;
                 border-radius: 10px;
-                background: #0b1020;
+                background: #000;
             }
 
-            .sf-viz-canvas {
+            .sf5-canvas {
                 display: block;
                 width: 100%;
                 height: 300px;
+                background: #000;
                 touch-action: pan-y;
             }
 
-            .sf-viz-speed {
+            .sf5-row {
                 display: flex;
                 align-items: center;
                 flex-wrap: wrap;
-                gap: 10px;
+                gap: 9px;
                 margin-top: 12px;
                 font-size: 12px;
             }
 
-            .sf-viz-speed input {
+            .sf5-row input[type="range"] {
                 flex: 1;
-                min-width: 100px;
+                min-width: 90px;
             }
 
-            .sf-viz-info {
+            .sf5-row output {
+                min-width: 42px;
+                color: #65e7ff;
+                text-align: right;
+            }
+
+            .sf5-info {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 8px;
                 margin-top: 12px;
             }
 
-            .sf-viz-info div {
+            .sf5-info > div {
                 min-width: 0;
                 padding: 10px;
-                border: 1px solid var(--border, #2a354b);
-                border-radius: 9px;
+                border: 1px solid #1c2939;
+                border-radius: 8px;
+                background: #080b11;
                 overflow-wrap: anywhere;
             }
 
-            .sf-viz-info span {
+            .sf5-info span {
                 display: block;
-                margin-bottom: 4px;
-                color: var(--muted, #a6b1c4);
-                font-size: 11px;
+                color: #899ab2;
+                font-size: 10px;
             }
 
-            .sf-viz-info strong {
+            .sf5-info strong {
+                display: block;
+                margin-top: 4px;
+                color: #e7f4ff;
                 font-size: 13px;
             }
 
+            .sf5-track {
+                margin-top: 10px;
+                padding: 11px;
+                border: 1px solid #1e2a3b;
+                border-radius: 9px;
+                background: #080b11;
+            }
+
+            .sf5-track-title {
+                margin: 0 0 8px;
+                color: #e7f4ff;
+                font-size: 12px;
+                overflow-wrap: anywhere;
+            }
+
+            .sf5-track .sf5-row {
+                margin-top: 7px;
+            }
+
+            .sf5-muted {
+                color: #899ab2;
+                font-size: 11px;
+            }
+
             @media (max-width: 360px) {
-                .sf-viz-panel {
+                .sf5-panel {
                     padding: 10px;
                 }
 
-                .sf-viz-canvas {
+                .sf5-canvas {
                     height: 250px;
                 }
             }
@@ -253,40 +352,47 @@ Limitations:
         document.head.appendChild(style);
     }
 
+    /* =====================================
+       USER INTERFACE
+    ===================================== */
+
     function createInterface() {
-        if (document.getElementById("sf-viz-panel")) {
+        if (document.getElementById("sf5-panel")) {
             state.panel =
-                document.getElementById("sf-viz-panel");
+                document.getElementById("sf5-panel");
 
             return;
         }
 
         addStyles();
 
-        var card = element(
-            "article",
-            "feature-card sf-viz-card"
+        var grid = document.querySelector(".feature-grid");
+
+        if (!grid) {
+            return;
+        }
+
+        var card = el("article", "feature-card sf5-card");
+
+        card.appendChild(
+            el("div", "feature-icon", "✧")
         );
 
         card.appendChild(
-            element("div", "feature-icon", "▥")
+            el("h3", "", "Neon MIDI Visualizer")
         );
 
         card.appendChild(
-            element("h3", "", "MIDI Visualizer")
-        );
-
-        card.appendChild(
-            element(
+            el(
                 "p",
                 "",
-                "Animate MIDI notes in a scrolling piano roll."
+                "Visualize MIDI notes as glowing neon lines and synchronize them with audio."
             )
         );
 
-        var openButton = button(
-            "Open MIDI Visualizer",
-            "sf-viz-primary"
+        var openButton = makeButton(
+            "Open Neon Visualizer",
+            true
         );
 
         openButton.addEventListener("click", function () {
@@ -305,85 +411,101 @@ Limitations:
 
         card.appendChild(openButton);
 
-        var grid = document.querySelector(".feature-grid");
+        grid.appendChild(card);
 
-        if (grid) {
-            grid.appendChild(card);
-        }
-
-        var panel = element("section", "sf-viz-panel");
-        panel.id = "sf-viz-panel";
+        var panel = el("section", "sf5-panel");
+        panel.id = "sf5-panel";
         panel.hidden = true;
 
         state.panel = panel;
 
-        var heading = element("div", "panel-heading");
-        var headingText = document.createElement("div");
+        var heading = el("div", "panel-heading");
+        var headingContent = document.createElement("div");
 
-        headingText.appendChild(
-            element("p", "eyebrow", "STAGE 3")
+        headingContent.appendChild(
+            el("p", "eyebrow", "STAGE 3 · VERSION 0.5.0")
         );
 
-        headingText.appendChild(
-            element("h2", "", "MIDI Visualizer")
+        headingContent.appendChild(
+            el("h2", "", "Neon MIDI Visualizer")
         );
 
-        var closeButton = button("×");
+        var closeButton = makeButton("×");
 
         closeButton.setAttribute(
             "aria-label",
-            "Close MIDI Visualizer"
+            "Close visualizer"
         );
 
         closeButton.addEventListener("click", function () {
-            stopAnimation();
+            pauseAnimation();
             panel.hidden = true;
         });
 
-        heading.appendChild(headingText);
+        heading.appendChild(headingContent);
         heading.appendChild(closeButton);
 
         panel.appendChild(heading);
 
         panel.appendChild(
-            element(
+            el(
                 "p",
-                "sf-viz-description",
-                "Choose a MIDI file to display its notes on a scrolling piano roll. This prototype animates note positions but does not play audio."
+                "sf5-description",
+                "Load a MIDI file to create a centered neon animation. Audio is optional and is loaded locally from your device."
             )
+        );
+
+        /* MIDI INPUT */
+
+        panel.appendChild(
+            el("label", "sf5-label", "MIDI File")
         );
 
         state.fileInput = document.createElement("input");
 
         state.fileInput.type = "file";
-        state.fileInput.accept =
-            ".mid,.midi,audio/midi,audio/x-midi";
-
-        state.fileInput.className = "sf-viz-file";
-
-        state.fileInput.setAttribute(
-            "aria-label",
-            "Choose a MIDI file to visualize"
-        );
+        state.fileInput.accept = ".mid,.midi";
+        state.fileInput.className = "sf5-file";
 
         state.fileInput.addEventListener(
             "change",
-            handleFile
+            handleMidiFile
         );
 
         panel.appendChild(state.fileInput);
 
-        state.fileName = element(
-            "p",
-            "sf-viz-help",
-            "No MIDI file loaded."
+        /* AUDIO INPUT */
+
+        panel.appendChild(
+            el("label", "sf5-label", "Audio File (optional)")
         );
 
-        panel.appendChild(state.fileName);
+        state.audioInput = document.createElement("input");
 
-        state.status = element(
+        state.audioInput.type = "file";
+        state.audioInput.accept = "audio/*";
+        state.audioInput.className = "sf5-file";
+
+        state.audioInput.addEventListener(
+            "change",
+            handleAudioFile
+        );
+
+        panel.appendChild(state.audioInput);
+
+        state.audioName = el(
+            "p",
+            "sf5-muted",
+            "No audio selected."
+        );
+
+        panel.appendChild(state.audioName);
+
+        /* STATUS */
+
+        state.status = el(
             "div",
-            "sf-viz-status",
+            "sf5-status",
             "Choose a MIDI file to begin."
         );
 
@@ -392,15 +514,13 @@ Limitations:
 
         panel.appendChild(state.status);
 
-        var actions = element("div", "sf-viz-actions");
+        /* TRANSPORT */
 
-        state.playButton = button(
-            "▶ Play",
-            "sf-viz-primary"
-        );
+        var actions = el("div", "sf5-actions");
 
-        state.pauseButton = button("Ⅱ Pause");
-        state.resetButton = button("↺ Reset");
+        state.playButton = makeButton("▶ Play", true);
+        state.pauseButton = makeButton("Ⅱ Pause");
+        state.resetButton = makeButton("↺ Reset");
 
         state.playButton.disabled = true;
         state.pauseButton.disabled = true;
@@ -427,72 +547,163 @@ Limitations:
 
         panel.appendChild(actions);
 
-        var speedRow = element("div", "sf-viz-speed");
+        /* SPEED */
+
+        var speedRow = el("div", "sf5-row");
 
         speedRow.appendChild(
-            element("label", "", "Animation speed")
+            el("label", "", "Playback speed")
         );
 
         state.speedInput = document.createElement("input");
+
         state.speedInput.type = "range";
-        state.speedInput.min = "25";
-        state.speedInput.max = "200";
+        state.speedInput.min = "50";
+        state.speedInput.max = "150";
         state.speedInput.value = "100";
 
-        state.speedInput.setAttribute(
-            "aria-label",
-            "Animation speed"
-        );
+        state.speedLabel = el("output", "", "1.00×");
 
-        state.speedLabel = element("strong", "", "1.0×");
-
-        state.speedInput.addEventListener(
-            "input",
-            function () {
-                state.speedLabel.textContent =
-                    (
-                        Number(state.speedInput.value) / 100
-                    ).toFixed(2) + "×";
-            }
-        );
+        state.speedInput.addEventListener("input", function () {
+            state.speedLabel.textContent =
+                (Number(state.speedInput.value) / 100).toFixed(2) +
+                "×";
+        });
 
         speedRow.appendChild(state.speedInput);
         speedRow.appendChild(state.speedLabel);
 
         panel.appendChild(speedRow);
 
-        var canvasWrap = element(
-            "div",
-            "sf-viz-canvas-wrap"
+        /* AUDIO OFFSET */
+
+        var offsetLabel = el(
+            "label",
+            "sf5-label",
+            "Audio Offset (milliseconds)"
         );
 
+        offsetLabel.htmlFor = "sf5-audio-offset";
+
+        panel.appendChild(offsetLabel);
+
+        state.audioOffset = document.createElement("input");
+
+        state.audioOffset.id = "sf5-audio-offset";
+        state.audioOffset.type = "number";
+        state.audioOffset.className = "sf5-number";
+        state.audioOffset.min = "-60000";
+        state.audioOffset.max = "60000";
+        state.audioOffset.step = "10";
+        state.audioOffset.value = "0";
+
+        state.audioOffset.addEventListener("change", function () {
+            if (state.audio) {
+                synchronizeAudio(true);
+            }
+        });
+
+        panel.appendChild(state.audioOffset);
+
+        panel.appendChild(
+            el(
+                "p",
+                "sf5-help",
+                "Positive values delay the audio relative to the MIDI timeline. Negative values move the audio earlier. Use small adjustments to align the two files."
+            )
+        );
+
+        /* COLOR PRESET */
+
+        panel.appendChild(
+            el("label", "sf5-label", "Color Preset")
+        );
+
+        state.colorPreset = document.createElement("select");
+        state.colorPreset.className = "sf5-select";
+
+        [
+            ["colorful", "Colorful"],
+            ["hue", "Hue"],
+            ["gradient", "Gradient"],
+            ["white", "Full White"],
+            ["black", "Full Black"]
+        ].forEach(function (item) {
+            var option = document.createElement("option");
+
+            option.value = item[0];
+            option.textContent = item[1];
+
+            state.colorPreset.appendChild(option);
+        });
+
+        state.colorPreset.addEventListener("change", drawFrame);
+
+        panel.appendChild(state.colorPreset);
+
+        /* TRACK SETTINGS */
+
+        panel.appendChild(
+            el("h3", "", "Track Settings")
+        );
+
+        panel.appendChild(
+            el(
+                "p",
+                "sf5-help",
+                "Adjust opacity and scale separately for each MIDI track."
+            )
+        );
+
+        state.trackControls = el("div", "");
+
+        panel.appendChild(state.trackControls);
+
+        /* CANVAS */
+
+        var canvasWrap = el("div", "sf5-canvas-wrap");
+
         state.canvas = document.createElement("canvas");
-        state.canvas.className = "sf-viz-canvas";
+        state.canvas.className = "sf5-canvas";
 
         state.canvas.setAttribute(
             "aria-label",
-            "Animated MIDI piano roll"
+            "Centered neon MIDI visualization"
         );
 
         canvasWrap.appendChild(state.canvas);
+
         panel.appendChild(canvasWrap);
 
         state.context = state.canvas.getContext("2d");
 
-        var info = element("div", "sf-viz-info");
+        /* INFORMATION */
 
-        info.appendChild(makeInfoBox("Notes", "viz-note-count"));
-        info.appendChild(makeInfoBox("Duration", "viz-duration"));
-        info.appendChild(makeInfoBox("Tempo", "viz-tempo"));
-        info.appendChild(makeInfoBox("Pitch range", "viz-pitch-range"));
+        var info = el("div", "sf5-info");
+
+        info.appendChild(
+            makeInfoBox("Notes", "sf5-note-count")
+        );
+
+        info.appendChild(
+            makeInfoBox("Duration", "sf5-duration")
+        );
+
+        info.appendChild(
+            makeInfoBox("Tempo", "sf5-tempo")
+        );
+
+        info.appendChild(
+            makeInfoBox("Tracks", "sf5-track-count")
+        );
 
         panel.appendChild(info);
 
         panel.appendChild(
-            element(
+            el(
                 "p",
-                "sf-viz-help",
-                "Tip: longer notes appear as longer bars. The vertical piano range adjusts to the notes found in your MIDI file. All processing happens in your browser."
+                "sf5-help",
+                "All MIDI parsing and visualization run locally in your browser. Audio support depends on the format supported by your browser."
             )
         );
 
@@ -504,7 +715,7 @@ Limitations:
                 midiPanel.nextSibling
             );
         } else {
-            document.body.appendChild(panel);
+            grid.parentNode.appendChild(panel);
         }
 
         resizeCanvas();
@@ -514,9 +725,9 @@ Limitations:
     function makeInfoBox(label, id) {
         var box = document.createElement("div");
 
-        box.appendChild(element("span", "", label));
+        box.appendChild(el("span", "", label));
 
-        var value = element("strong", "", "—");
+        var value = el("strong", "", "—");
         value.id = id;
 
         box.appendChild(value);
@@ -532,6 +743,10 @@ Limitations:
         }
     }
 
+    /* =====================================
+       MIDI PARSER
+    ===================================== */
+
     function readVLQ(view, cursor, end) {
         var value = 0;
         var count = 0;
@@ -545,30 +760,32 @@ Limitations:
             }
 
             byte = view.getUint8(cursor.pos++);
+
             value = (value << 7) | (byte & 0x7F);
-            count += 1;
+
+            count++;
         } while (byte & 0x80);
 
         return value;
     }
 
     function readAscii(view, offset, length) {
-        var text = "";
+        var result = "";
 
-        for (var i = 0; i < length; i += 1) {
-            text += String.fromCharCode(
+        for (var i = 0; i < length; i++) {
+            result += String.fromCharCode(
                 view.getUint8(offset + i)
             );
         }
 
-        return text;
+        return result;
     }
 
     function parseMidi(buffer) {
         var view = new DataView(buffer);
 
         if (view.byteLength < 14) {
-            throw new Error("The selected file is too small to be MIDI.");
+            throw new Error("The MIDI file is too small.");
         }
 
         if (readAscii(view, 0, 4) !== "MThd") {
@@ -590,41 +807,57 @@ Limitations:
 
         if (format !== 0 && format !== 1) {
             throw new Error(
-                "Only MIDI format 0 and format 1 are supported."
+                "Only MIDI format 0 and 1 are supported."
             );
         }
 
-        if ((division & 0x8000) !== 0 || division === 0) {
+        if (division === 0 || (division & 0x8000)) {
             throw new Error(
-                "This file must use PPQ timing, not SMPTE timing."
+                "This MIDI file must use PPQ timing."
             );
+        }
+
+        if (!trackCount) {
+            throw new Error("No MIDI tracks were found.");
         }
 
         var ppq = division;
         var position = 8 + headerLength;
+
         var notes = [];
         var tempos = [];
-        var maxTick = 0;
+        var tracks = [];
+        var maximumTick = 0;
 
-        for (var trackIndex = 0; trackIndex < trackCount; trackIndex++) {
+        for (
+            var trackIndex = 0;
+            trackIndex < trackCount;
+            trackIndex++
+        ) {
+            if (position + 8 > view.byteLength) {
+                throw new Error("A MIDI track is missing.");
+            }
+
+            var chunkType = readAscii(view, position, 4);
+
+            var chunkLength = view.getUint32(
+                position + 4,
+                false
+            );
+
+            var trackStart = position + 8;
+            var trackEnd = trackStart + chunkLength;
+
             if (
-                position + 8 > view.byteLength ||
-                readAscii(view, position, 4) !== "MTrk"
+                chunkType !== "MTrk" ||
+                trackEnd > view.byteLength
             ) {
                 throw new Error(
-                    "MIDI track " + (trackIndex + 1) + " is missing or invalid."
+                    "A MIDI track is invalid or incomplete."
                 );
             }
 
-            var trackLength = view.getUint32(position + 4, false);
-            var trackStart = position + 8;
-            var trackEnd = trackStart + trackLength;
-
-            if (trackEnd > view.byteLength) {
-                throw new Error(
-                    "A MIDI track extends beyond the end of the file."
-                );
-            }
+            position = trackEnd;
 
             var cursor = { pos: trackStart };
             var tick = 0;
@@ -632,12 +865,16 @@ Limitations:
 
             var activeNotes = Object.create(null);
 
+            var trackInfo = {
+                index: trackIndex,
+                name: "Track " + (trackIndex + 1),
+                noteCount: 0
+            };
+
             while (cursor.pos < trackEnd) {
                 tick += readVLQ(view, cursor, trackEnd);
 
-                if (tick > maxTick) {
-                    maxTick = tick;
-                }
+                maximumTick = Math.max(maximumTick, tick);
 
                 if (cursor.pos >= trackEnd) {
                     throw new Error("Incomplete MIDI event.");
@@ -648,20 +885,26 @@ Limitations:
 
                 if (firstByte < 0x80) {
                     if (runningStatus === null) {
-                        throw new Error("Invalid MIDI running status.");
+                        throw new Error(
+                            "Invalid MIDI running status."
+                        );
                     }
 
                     status = runningStatus;
                 } else {
                     status = firstByte;
-                    cursor.pos += 1;
+                    cursor.pos++;
                 }
+
+                /* META EVENTS */
 
                 if (status === 0xFF) {
                     runningStatus = null;
 
                     if (cursor.pos >= trackEnd) {
-                        throw new Error("Incomplete MIDI meta event.");
+                        throw new Error(
+                            "Incomplete MIDI meta event."
+                        );
                     }
 
                     var metaType = view.getUint8(cursor.pos++);
@@ -672,20 +915,42 @@ Limitations:
                         trackEnd
                     );
 
-                    if (cursor.pos + metaLength > trackEnd) {
-                        throw new Error("Invalid MIDI meta event length.");
+                    if (
+                        cursor.pos + metaLength > trackEnd
+                    ) {
+                        throw new Error(
+                            "Invalid MIDI meta event length."
+                        );
                     }
 
-                    if (metaType === 0x51 && metaLength === 3) {
-                        var tempo =
-                            (view.getUint8(cursor.pos) << 16) |
-                            (view.getUint8(cursor.pos + 1) << 8) |
+                    if (
+                        metaType === 0x03 &&
+                        metaLength > 0
+                    ) {
+                        trackInfo.name = readAscii(
+                            view,
+                            cursor.pos,
+                            Math.min(metaLength, 200)
+                        );
+                    }
+
+                    if (
+                        metaType === 0x51 &&
+                        metaLength === 3
+                    ) {
+                        var microseconds =
+                            (
+                                view.getUint8(cursor.pos) << 16
+                            ) |
+                            (
+                                view.getUint8(cursor.pos + 1) << 8
+                            ) |
                             view.getUint8(cursor.pos + 2);
 
-                        if (tempo > 0) {
+                        if (microseconds > 0) {
                             tempos.push({
                                 tick: tick,
-                                tempo: tempo
+                                tempo: microseconds
                             });
                         }
                     }
@@ -699,6 +964,8 @@ Limitations:
                     continue;
                 }
 
+                /* SYSTEM EXCLUSIVE */
+
                 if (status === 0xF0 || status === 0xF7) {
                     runningStatus = null;
 
@@ -708,16 +975,23 @@ Limitations:
                         trackEnd
                     );
 
-                    if (cursor.pos + sysexLength > trackEnd) {
-                        throw new Error("Invalid MIDI SysEx event.");
+                    if (
+                        cursor.pos + sysexLength > trackEnd
+                    ) {
+                        throw new Error(
+                            "Invalid MIDI SysEx event."
+                        );
                     }
 
                     cursor.pos += sysexLength;
+
                     continue;
                 }
 
                 if (status >= 0xF0) {
-                    throw new Error("Unsupported MIDI system event.");
+                    throw new Error(
+                        "Unsupported MIDI system event."
+                    );
                 }
 
                 runningStatus = status;
@@ -726,7 +1000,8 @@ Limitations:
                 var channel = status & 0x0F;
 
                 var dataLength =
-                    command === 0xC0 || command === 0xD0
+                    command === 0xC0 ||
+                    command === 0xD0
                         ? 1
                         : 2;
 
@@ -734,32 +1009,36 @@ Limitations:
 
                 for (var d = 0; d < dataLength; d++) {
                     if (cursor.pos >= trackEnd) {
-                        throw new Error("Incomplete MIDI channel event.");
+                        throw new Error(
+                            "Incomplete MIDI channel event."
+                        );
                     }
 
-                    var dataByte = view.getUint8(cursor.pos);
+                    var dataByte = view.getUint8(cursor.pos++);
 
                     if (dataByte >= 0x80) {
-                        throw new Error("Invalid MIDI event data.");
+                        throw new Error(
+                            "Invalid MIDI channel data."
+                        );
                     }
 
                     data.push(dataByte);
-                    cursor.pos += 1;
                 }
+
+                /* NOTE ON */
 
                 if (
                     command === 0x90 &&
-                    data.length === 2 &&
+                    dataLength === 2 &&
                     data[1] > 0
                 ) {
-                    var noteKey =
-                        channel + ":" + data[0];
+                    var key = channel + ":" + data[0];
 
-                    if (!activeNotes[noteKey]) {
-                        activeNotes[noteKey] = [];
+                    if (!activeNotes[key]) {
+                        activeNotes[key] = [];
                     }
 
-                    activeNotes[noteKey].push({
+                    activeNotes[key].push({
                         tick: tick,
                         pitch: data[0],
                         velocity: data[1],
@@ -771,70 +1050,78 @@ Limitations:
                     command === 0x80 ||
                     (
                         command === 0x90 &&
-                        data.length === 2 &&
+                        dataLength === 2 &&
                         data[1] === 0
                     )
                 ) {
-                    var offKey =
-                        channel + ":" + data[0];
+                    var offKey = channel + ":" + data[0];
 
                     var queue = activeNotes[offKey];
 
                     if (queue && queue.length) {
-                        var note = queue.shift();
+                        var active = queue.shift();
+
+                        if (notes.length >= MAX_NOTES) {
+                            throw new Error(
+                                "This MIDI has too many notes for this prototype."
+                            );
+                        }
 
                         notes.push({
-                            startTick: note.tick,
+                            startTick: active.tick,
                             endTick: Math.max(
-                                note.tick + 1,
+                                active.tick + 1,
                                 tick
                             ),
-                            pitch: note.pitch,
-                            velocity: note.velocity,
-                            channel: note.channel,
-                            track: note.track
+                            pitch: active.pitch,
+                            velocity: active.velocity,
+                            channel: active.channel,
+                            track: active.track
                         });
+
+                        trackInfo.noteCount++;
                     }
                 }
             }
 
-            /*
-            Close notes that have no matching Note Off event.
-            This prevents malformed files from leaving notes open forever.
-            */
+            /* CLOSE UNMATCHED NOTES */
 
             Object.keys(activeNotes).forEach(function (key) {
-                var queue = activeNotes[key];
+                activeNotes[key].forEach(function (active) {
+                    if (notes.length >= MAX_NOTES) {
+                        return;
+                    }
 
-                queue.forEach(function (note) {
                     notes.push({
-                        startTick: note.tick,
-                        endTick: Math.max(note.tick + 1, tick),
-                        pitch: note.pitch,
-                        velocity: note.velocity,
-                        channel: note.channel,
-                        track: note.track
+                        startTick: active.tick,
+                        endTick: Math.max(
+                            active.tick + 1,
+                            tick
+                        ),
+                        pitch: active.pitch,
+                        velocity: active.velocity,
+                        channel: active.channel,
+                        track: active.track
                     });
+
+                    trackInfo.noteCount++;
                 });
             });
 
-            position = trackEnd;
+            tracks.push(trackInfo);
         }
 
         if (!notes.length) {
             throw new Error(
-                "No playable note events were found in this MIDI file."
+                "No playable MIDI notes were found."
             );
         }
+
+        /* TEMPO MAP */
 
         tempos.sort(function (a, b) {
             return a.tick - b.tick;
         });
-
-        /*
-        Convert ticks into seconds using the tempo map.
-        The default MIDI tempo is 120 BPM.
-        */
 
         if (!tempos.length || tempos[0].tick > 0) {
             tempos.unshift({
@@ -892,38 +1179,142 @@ Limitations:
             return seconds;
         }
 
+        var minPitch = 127;
+        var maxPitch = 0;
+        var duration = 0;
+
         notes.forEach(function (note) {
             note.start = tickToSeconds(note.startTick);
             note.end = tickToSeconds(note.endTick);
 
-            if (note.end <= note.start) {
-                note.end = note.start + 0.02;
-            }
-        });
+            note.end = Math.max(
+                note.start + 0.02,
+                note.end
+            );
 
-        var minPitch = 127;
-        var maxPitch = 0;
-        var maxSeconds = 0;
-
-        notes.forEach(function (note) {
             minPitch = Math.min(minPitch, note.pitch);
             maxPitch = Math.max(maxPitch, note.pitch);
-            maxSeconds = Math.max(maxSeconds, note.end);
+
+            duration = Math.max(duration, note.end);
         });
+
+        duration = Math.max(
+            duration,
+            tickToSeconds(maximumTick)
+        );
 
         return {
             notes: notes,
-            duration: Math.max(
-                maxSeconds,
-                tickToSeconds(maxTick)
-            ),
+            tracks: tracks,
+            duration: duration,
             tempo: 60000000 / uniqueTempos[0].tempo,
             minPitch: minPitch,
             maxPitch: maxPitch
         };
     }
 
-    function handleFile(event) {
+    /* =====================================
+       TRACK SETTINGS
+    ===================================== */
+
+    function buildTrackSettings() {
+        if (!state.trackControls) {
+            return;
+        }
+
+        state.trackControls.textContent = "";
+
+        state.tracks.forEach(function (track) {
+            state.settings[track.index] = {
+                opacity: 0.85,
+                scale: 1
+            };
+
+            var box = el("div", "sf5-track");
+
+            box.appendChild(
+                el(
+                    "p",
+                    "sf5-track-title",
+                    track.name + " · " +
+                    track.noteCount + " notes"
+                )
+            );
+
+            /* OPACITY */
+
+            var opacityRow = el("div", "sf5-row");
+
+            opacityRow.appendChild(
+                el("label", "", "Opacity")
+            );
+
+            var opacityInput = document.createElement("input");
+
+            opacityInput.type = "range";
+            opacityInput.min = "10";
+            opacityInput.max = "100";
+            opacityInput.value = "85";
+
+            var opacityOutput = el("output", "", "85%");
+
+            opacityInput.addEventListener("input", function () {
+                var value = Number(opacityInput.value);
+
+                state.settings[track.index].opacity = value / 100;
+
+                opacityOutput.textContent = value + "%";
+
+                drawFrame();
+            });
+
+            opacityRow.appendChild(opacityInput);
+            opacityRow.appendChild(opacityOutput);
+
+            box.appendChild(opacityRow);
+
+            /* SCALE */
+
+            var scaleRow = el("div", "sf5-row");
+
+            scaleRow.appendChild(
+                el("label", "", "Scale / Depth")
+            );
+
+            var scaleInput = document.createElement("input");
+
+            scaleInput.type = "range";
+            scaleInput.min = "50";
+            scaleInput.max = "200";
+            scaleInput.value = "100";
+
+            var scaleOutput = el("output", "", "1.00×");
+
+            scaleInput.addEventListener("input", function () {
+                var value = Number(scaleInput.value);
+
+                state.settings[track.index].scale = value / 100;
+
+                scaleOutput.textContent =
+                    (value / 100).toFixed(2) + "×";
+
+                drawFrame();
+            });
+
+            scaleRow.appendChild(scaleInput);
+            scaleRow.appendChild(scaleOutput);
+
+            box.appendChild(scaleRow);
+
+            state.trackControls.appendChild(box);
+        });
+    }
+
+    /* =====================================
+       MIDI FILE LOADING
+    ===================================== */
+
+    function handleMidiFile(event) {
         var file = event.target.files &&
             event.target.files[0];
 
@@ -931,18 +1322,23 @@ Limitations:
             return;
         }
 
-        stopAnimation();
+        pauseAnimation();
 
         if (!/\.(mid|midi)$/i.test(file.name)) {
-            setStatus("Please choose a .mid or .midi file.", "error");
+            setStatus(
+                "Please select a .mid or .midi file.",
+                "error"
+            );
+
             return;
         }
 
         if (file.size > MAX_FILE_SIZE) {
             setStatus(
-                "This file is larger than 50 MB. Try a smaller MIDI file.",
+                "This MIDI file exceeds 50 MB.",
                 "error"
             );
+
             return;
         }
 
@@ -955,39 +1351,45 @@ Limitations:
                 var parsed = parseMidi(reader.result);
 
                 state.notes = parsed.notes;
+                state.tracks = parsed.tracks;
                 state.duration = parsed.duration;
-                state.currentTime = 0;
                 state.tempo = parsed.tempo;
+
+                state.currentTime = 0;
+
                 state.minPitch = Math.max(
                     0,
                     parsed.minPitch - 2
                 );
+
                 state.maxPitch = Math.min(
                     127,
                     parsed.maxPitch + 2
                 );
 
-                state.fileName.textContent =
-                    file.name;
+                state.effects = [];
+                state.loaded = true;
+
+                buildTrackSettings();
 
                 setInfo(
-                    "viz-note-count",
+                    "sf5-note-count",
                     String(state.notes.length)
                 );
 
                 setInfo(
-                    "viz-duration",
+                    "sf5-duration",
                     formatTime(state.duration)
                 );
 
                 setInfo(
-                    "viz-tempo",
-                    parsed.tempo.toFixed(1) + " BPM"
+                    "sf5-tempo",
+                    state.tempo.toFixed(1) + " BPM"
                 );
 
                 setInfo(
-                    "viz-pitch-range",
-                    state.minPitch + "–" + state.maxPitch
+                    "sf5-track-count",
+                    String(state.tracks.length)
                 );
 
                 state.playButton.disabled = false;
@@ -998,32 +1400,92 @@ Limitations:
                 drawFrame();
 
                 setStatus(
-                    "MIDI loaded successfully. Press Play to start the animation.",
+                    "MIDI loaded. Press Play to begin.",
                     "success"
                 );
 
             } catch (error) {
                 state.notes = [];
+                state.tracks = [];
                 state.duration = 0;
                 state.currentTime = 0;
+                state.loaded = false;
 
                 drawFrame();
 
                 setStatus(
                     error && error.message
                         ? error.message
-                        : "Could not read this MIDI file.",
+                        : "Unable to parse this MIDI file.",
                     "error"
                 );
             }
         };
 
         reader.onerror = function () {
-            setStatus("Unable to read the selected file.", "error");
+            setStatus(
+                "Unable to read the selected MIDI file.",
+                "error"
+            );
         };
 
         reader.readAsArrayBuffer(file);
     }
+
+    /* =====================================
+       AUDIO LOADING
+    ===================================== */
+
+    function handleAudioFile(event) {
+        var file = event.target.files &&
+            event.target.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        pauseAnimation();
+
+        if (state.audio) {
+            state.audio.pause();
+            state.audio.removeAttribute("src");
+            state.audio.load();
+            state.audio = null;
+        }
+
+        if (state.audioURL) {
+            URL.revokeObjectURL(state.audioURL);
+            state.audioURL = null;
+        }
+
+        state.audioURL = URL.createObjectURL(file);
+
+        state.audio = new Audio();
+        state.audio.preload = "metadata";
+        state.audio.src = state.audioURL;
+
+        state.audioName.textContent = file.name;
+
+        state.audio.addEventListener("error", function () {
+            setStatus(
+                "The browser could not load this audio format. Try another audio file.",
+                "error"
+            );
+        });
+
+        state.audio.addEventListener("loadedmetadata", function () {
+            setStatus(
+                "Audio loaded. Adjust Audio Offset if necessary.",
+                "success"
+            );
+        });
+
+        setStatus("Loading audio...");
+    }
+
+    /* =====================================
+       TIME HELPERS
+    ===================================== */
 
     function formatTime(seconds) {
         if (!isFinite(seconds) || seconds < 0) {
@@ -1041,6 +1503,181 @@ Limitations:
         );
     }
 
+    function getAudioOffset() {
+        if (!state.audioOffset) {
+            return 0;
+        }
+
+        var milliseconds = Number(state.audioOffset.value);
+
+        if (!isFinite(milliseconds)) {
+            return 0;
+        }
+
+        return clamp(milliseconds, -60000, 60000) / 1000;
+    }
+
+    /* =====================================
+       AUDIO SYNCHRONIZATION
+    ===================================== */
+
+    function synchronizeAudio(forceSeek) {
+        var audio = state.audio;
+
+        if (!audio || !isFinite(audio.duration)) {
+            return;
+        }
+
+        /*
+        Positive offset:
+        audio starts later than the MIDI timeline.
+
+        Negative offset:
+        audio starts from a later position in its file.
+        */
+
+        var offset = getAudioOffset();
+
+        var targetAudioTime =
+            state.currentTime - offset;
+
+        if (targetAudioTime < 0) {
+            audio.pause();
+
+            if (forceSeek) {
+                try {
+                    audio.currentTime = 0;
+                } catch (error) {
+                    /* Metadata may not be ready yet. */
+                }
+            }
+
+            return;
+        }
+
+        if (targetAudioTime >= audio.duration) {
+            audio.pause();
+            return;
+        }
+
+        var drift = Math.abs(
+            audio.currentTime - targetAudioTime
+        );
+
+        if (forceSeek || drift > 0.20) {
+            try {
+                audio.currentTime = targetAudioTime;
+            } catch (error) {
+                /* The browser may not have loaded metadata. */
+            }
+        }
+
+        if (state.playing && audio.paused) {
+            var playPromise = audio.play();
+
+            if (playPromise && playPromise.catch) {
+                playPromise.catch(function () {
+                    setStatus(
+                        "Audio playback was blocked. Press Play again to allow playback.",
+                        "error"
+                    );
+                });
+            }
+        }
+    }
+
+    /* =====================================
+       COLOR PRESETS
+    ===================================== */
+
+    function noteColor(note, progress) {
+        var preset = state.colorPreset
+            ? state.colorPreset.value
+            : "colorful";
+
+        var hue;
+
+        if (preset === "white") {
+            return "255,255,255";
+        }
+
+        if (preset === "black") {
+            return "80,95,115";
+        }
+
+        if (preset === "hue") {
+            hue = (
+                185 +
+                note.pitch * 3 +
+                note.channel * 19
+            ) % 360;
+
+        } else if (preset === "gradient") {
+            hue = (
+                180 +
+                progress * 140
+            ) % 360;
+
+        } else {
+            hue = (
+                note.pitch * 7 +
+                note.track * 67 +
+                note.channel * 23
+            ) % 360;
+        }
+
+        var color = hslToRgb(hue / 360, 1, 0.65);
+
+        return color[0] + "," + color[1] + "," + color[2];
+    }
+
+    function hslToRgb(h, s, l) {
+        var r, g, b;
+
+        if (s === 0) {
+            r = g = b = l;
+        } else {
+            var q = l < 0.5
+                ? l * (1 + s)
+                : l + s - l * s;
+
+            var p = 2 * l - q;
+
+            r = hueToRgb(p, q, h + 1 / 3);
+            g = hueToRgb(p, q, h);
+            b = hueToRgb(p, q, h - 1 / 3);
+        }
+
+        return [
+            Math.round(r * 255),
+            Math.round(g * 255),
+            Math.round(b * 255)
+        ];
+    }
+
+    function hueToRgb(p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+
+        if (t < 1 / 6) {
+            return p + (q - p) * 6 * t;
+        }
+
+        if (t < 1 / 2) {
+            return q;
+        }
+
+        if (t < 2 / 3) {
+            return p + (q - p) * (2 / 3 - t) * 6;
+        }
+
+        return p;
+    }
+
+    /* =====================================
+       CANVAS
+    ===================================== */
+
     function resizeCanvas() {
         if (!state.canvas || !state.context) {
             return;
@@ -1048,13 +1685,18 @@ Limitations:
 
         var rect = state.canvas.getBoundingClientRect();
 
-        if (!rect.width) {
+        if (!rect.width || !rect.height) {
             return;
         }
 
+        /*
+        Keep the internal canvas resolution modest
+        for devices with limited memory.
+        */
+
         var ratio = Math.min(
             window.devicePixelRatio || 1,
-            2
+            1.5
         );
 
         state.canvas.width = Math.floor(rect.width * ratio);
@@ -1077,7 +1719,8 @@ Limitations:
             return;
         }
 
-        var context = state.context;
+        var ctx = state.context;
+
         var width = state.canvas.clientWidth;
         var height = state.canvas.clientHeight;
 
@@ -1085,18 +1728,18 @@ Limitations:
             return;
         }
 
-        context.clearRect(0, 0, width, height);
+        ctx.clearRect(0, 0, width, height);
 
-        context.fillStyle = "#0b1020";
-        context.fillRect(0, 0, width, height);
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, width, height);
 
         if (!state.notes.length) {
-            context.fillStyle = "#a6b1c4";
-            context.font = "13px system-ui";
-            context.textAlign = "center";
+            ctx.fillStyle = "#74859b";
+            ctx.font = "12px sans-serif";
+            ctx.textAlign = "center";
 
-            context.fillText(
-                "Choose a MIDI file to visualize",
+            ctx.fillText(
+                "LOAD MIDI TO BEGIN",
                 width / 2,
                 height / 2
             );
@@ -1104,200 +1747,308 @@ Limitations:
             return;
         }
 
-        var left = 43;
-        var top = 12;
-        var bottom = 20;
+        var centerX = width / 2;
+        var centerY = height / 2;
 
-        var pianoWidth = left;
-        var rollHeight = height - top - bottom;
+        var usableHeight = height - 30;
 
-        var pitchCount = Math.max(
+        var pitchRange = Math.max(
             1,
             state.maxPitch - state.minPitch + 1
         );
 
-        var rowHeight = rollHeight / pitchCount;
-
-        var pixelsPerSecond = 85;
-        var playheadX = left + 8;
+        var rowHeight = usableHeight / pitchRange;
 
         /*
-        Draw pitch rows and a simplified piano keyboard.
+        Background grid.
         */
 
-        for (var pitch = state.minPitch; pitch <= state.maxPitch; pitch++) {
-            var row = state.maxPitch - pitch;
-            var y = top + row * rowHeight;
+        ctx.strokeStyle = "rgba(60,120,150,0.10)";
+        ctx.lineWidth = 1;
 
-            var isBlack = [1, 3, 6, 8, 10].indexOf(
-                pitch % 12
-            ) !== -1;
+        for (var i = 0; i < 7; i++) {
+            var gridX = width * i / 6;
 
-            context.fillStyle = isBlack
-                ? "#101a2c"
-                : "#0d1525";
-
-            context.fillRect(
-                pianoWidth,
-                y,
-                width - pianoWidth,
-                rowHeight + 0.5
-            );
-
-            context.strokeStyle = "rgba(160,180,220,0.10)";
-            context.lineWidth = 1;
-
-            context.beginPath();
-            context.moveTo(pianoWidth, y);
-            context.lineTo(width, y);
-            context.stroke();
-
-            context.fillStyle = isBlack
-                ? "#29344a"
-                : "#d9e2f2";
-
-            context.fillRect(
-                0,
-                y,
-                isBlack ? 26 : 37,
-                Math.max(1, rowHeight - 0.5)
-            );
-
-            if (rowHeight >= 10 && pitch % 12 === 0) {
-                context.fillStyle = "#111827";
-                context.font = "9px system-ui";
-                context.textAlign = "left";
-
-                context.fillText(
-                    "C" + (Math.floor(pitch / 12) - 1),
-                    3,
-                    y + rowHeight - 2
-                );
-            }
+            ctx.beginPath();
+            ctx.moveTo(gridX, 0);
+            ctx.lineTo(gridX, height);
+            ctx.stroke();
         }
 
         /*
-        Draw second markers.
+        Centered horizontal reference.
         */
 
-        context.font = "10px system-ui";
-        context.textAlign = "center";
-        context.fillStyle = "#a6b1c4";
+        ctx.strokeStyle = "rgba(90,210,255,0.18)";
 
-        var visibleSeconds = (width - playheadX) / pixelsPerSecond;
-        var firstSecond = Math.floor(state.currentTime);
+        ctx.beginPath();
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(width, centerY);
+        ctx.stroke();
 
-        for (
-            var second = firstSecond;
-            second <= state.currentTime + visibleSeconds + 1;
-            second++
-        ) {
-            var markerX =
-                playheadX +
-                (second - state.currentTime) * pixelsPerSecond;
+        /*
+        Visible note region:
+        upcoming notes approach from the right;
+        notes move toward the fixed center playhead.
+        */
 
-            if (markerX < pianoWidth || markerX > width) {
+        var visibleDuration =
+            width / PIXELS_PER_SECOND;
+
+        var startTime =
+            state.currentTime - visibleDuration / 2;
+
+        var endTime =
+            state.currentTime + visibleDuration / 2;
+
+        var preset = state.colorPreset
+            ? state.colorPreset.value
+            : "colorful";
+
+        /*
+        Draw note lines.
+        */
+
+        for (var n = 0; n < state.notes.length; n++) {
+            var note = state.notes[n];
+
+            if (
+                note.end < startTime ||
+                note.start > endTime
+            ) {
                 continue;
             }
 
-            context.strokeStyle = "rgba(160,180,220,0.18)";
+            var settings = state.settings[note.track] || {
+                opacity: 0.85,
+                scale: 1
+            };
 
-            context.beginPath();
-            context.moveTo(markerX, top);
-            context.lineTo(markerX, height - bottom);
-            context.stroke();
-
-            context.fillText(
-                formatTime(second),
-                markerX,
-                height - 5
-            );
-        }
-
-        /*
-        Draw notes.
-        */
-
-        state.notes.forEach(function (note) {
-            var x =
-                playheadX +
+            var x1 = centerX +
                 (note.start - state.currentTime) *
-                pixelsPerSecond;
+                PIXELS_PER_SECOND;
 
-            var noteWidth = Math.max(
-                3,
-                (note.end - note.start) * pixelsPerSecond
-            );
+            var x2 = centerX +
+                (note.end - state.currentTime) *
+                PIXELS_PER_SECOND;
 
             var y =
-                top +
+                15 +
                 (state.maxPitch - note.pitch) *
                 rowHeight;
 
-            if (
-                x + noteWidth < pianoWidth ||
-                x > width
-            ) {
-                return;
-            }
+            var trackScale = settings.scale;
 
-            var velocityAlpha =
-                0.45 + (note.velocity / 127) * 0.55;
-
-            var hue = (note.channel * 31 + 190) % 360;
-
-            context.fillStyle =
-                "hsla(" + hue + ", 85%, 68%, " +
-                velocityAlpha + ")";
-
-            context.fillRect(
-                x,
-                y + 1,
-                Math.min(noteWidth, width - x),
-                Math.max(2, rowHeight - 2)
+            var lineHeight = clamp(
+                rowHeight * 0.30 * trackScale,
+                1,
+                7
             );
 
-            if (noteWidth > 10) {
-                context.fillStyle = "rgba(255,255,255,0.75)";
+            var opacity = settings.opacity *
+                (0.35 + note.velocity / 127 * 0.65);
 
-                context.fillRect(
-                    x,
-                    y + 1,
-                    2,
-                    Math.max(2, rowHeight - 2)
-                );
+            x1 = clamp(x1, -10, width + 10);
+            x2 = clamp(x2, -10, width + 10);
+
+            var length = x2 - x1;
+
+            if (length <= 0) {
+                continue;
             }
-        });
+
+            var rgb = noteColor(
+                note,
+                note.start / Math.max(1, state.duration)
+            );
+
+            /*
+            Keep the glow subtle to reduce rendering cost.
+            */
+
+            ctx.globalAlpha = opacity;
+
+            if (preset !== "black") {
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = "rgb(" + rgb + ")";
+            } else {
+                ctx.shadowBlur = 0;
+            }
+
+            ctx.strokeStyle = "rgb(" + rgb + ")";
+            ctx.lineWidth = lineHeight;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y);
+            ctx.lineTo(x2, y);
+            ctx.stroke();
+
+            /*
+            Bright note head.
+            */
+
+            ctx.fillStyle =
+                preset === "black"
+                    ? "#a8b4c6"
+                    : "rgba(255,255,255,0.9)";
+
+            ctx.fillRect(
+                x1 - 1,
+                y - lineHeight,
+                2,
+                lineHeight * 2
+            );
+
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+        }
 
         /*
-        Fixed playhead.
+        Circle effects around notes crossing
+        the center playhead.
         */
 
-        context.fillStyle = "#ffffff";
-        context.fillRect(
-            playheadX,
-            top,
-            2,
-            height - top - bottom
+        if (state.playing) {
+            if (
+                performance.now() - state.lastEffectCheck > 80
+            ) {
+                state.lastEffectCheck = performance.now();
+
+                for (
+                    var j = 0;
+                    j < state.notes.length;
+                    j++
+                ) {
+                    var effectNote = state.notes[j];
+
+                    if (
+                        Math.abs(
+                            effectNote.start - state.currentTime
+                        ) < 0.07
+                    ) {
+                        state.effects.push({
+                            pitch: effectNote.pitch,
+                            track: effectNote.track,
+                            age: 0
+                        });
+                    }
+                }
+            }
+        }
+
+        for (
+            var e = state.effects.length - 1;
+            e >= 0;
+            e--
+        ) {
+            var effect = state.effects[e];
+
+            var effectSettings =
+                state.settings[effect.track] || {
+                    opacity: 0.85,
+                    scale: 1
+                };
+
+            var effectY =
+                15 +
+                (state.maxPitch - effect.pitch) *
+                rowHeight;
+
+            var radius =
+                3 +
+                effect.age * 38 *
+                effectSettings.scale;
+
+            var effectAlpha =
+                effectSettings.opacity *
+                (1 - effect.age);
+
+            if (effectAlpha <= 0 || effect.age >= 1) {
+                state.effects.splice(e, 1);
+                continue;
+            }
+
+            ctx.globalAlpha = effectAlpha;
+
+            ctx.strokeStyle =
+                preset === "white"
+                    ? "#ffffff"
+                    : preset === "black"
+                        ? "#8290a3"
+                        : "#5ceaff";
+
+            ctx.lineWidth = 1.5;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                centerX,
+                effectY,
+                radius,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.stroke();
+
+            ctx.globalAlpha = 1;
+
+            if (state.playing) {
+                effect.age += 0.035;
+            }
+        }
+
+        /*
+        Fixed center playhead.
+        */
+
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "#57eaff";
+
+        ctx.strokeStyle = "#57eaff";
+        ctx.lineWidth = 1.5;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, height);
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+
+        /*
+        Timeline label.
+        */
+
+        ctx.fillStyle = "#8eeeff";
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+
+        ctx.fillText(
+            formatTime(state.currentTime),
+            centerX,
+            height - 7
         );
 
-        context.fillStyle = "#ffffff";
-        context.beginPath();
-        context.moveTo(playheadX - 5, top);
-        context.lineTo(playheadX + 7, top);
-        context.lineTo(playheadX + 1, top + 9);
-        context.closePath();
-        context.fill();
+        ctx.globalAlpha = 1;
     }
 
+    /* =====================================
+       PLAYBACK
+    ===================================== */
+
     function startAnimation() {
-        if (!state.notes.length) {
-            setStatus("Load a MIDI file first.", "error");
+        if (!state.loaded || !state.notes.length) {
+            setStatus(
+                "Load a MIDI file first.",
+                "error"
+            );
+
             return;
         }
 
         if (state.currentTime >= state.duration) {
             state.currentTime = 0;
+            state.effects = [];
         }
 
         state.playing = true;
@@ -1307,8 +2058,12 @@ Limitations:
             cancelAnimationFrame(state.animationId);
         }
 
-        state.animationId = requestAnimationFrame(animate);
-        setStatus("Animation playing.", "success");
+        synchronizeAudio(true);
+
+        state.animationId =
+            requestAnimationFrame(animate);
+
+        setStatus("Playback started.", "success");
     }
 
     function animate(timestamp) {
@@ -1320,42 +2075,51 @@ Limitations:
             state.lastFrame = timestamp;
         }
 
-        var delta = (timestamp - state.lastFrame) / 1000;
+        var delta =
+            (timestamp - state.lastFrame) / 1000;
+
         state.lastFrame = timestamp;
 
         /*
-        Limit large jumps after the browser pauses the tab.
+        Avoid large jumps after browser interruptions.
         */
 
-        delta = Math.min(delta, 0.1);
+        delta = Math.min(delta, 0.08);
 
         var speed =
             Number(state.speedInput.value) / 100;
 
         state.currentTime += delta * speed;
 
+        synchronizeAudio(false);
+
         if (state.currentTime >= state.duration) {
             state.currentTime = state.duration;
+
             state.playing = false;
             state.animationId = null;
 
+            if (state.audio) {
+                state.audio.pause();
+            }
+
             drawFrame();
 
-            setStatus("Animation complete. Press Reset to replay.", "success");
+            setStatus(
+                "Playback complete. Press Reset to replay.",
+                "success"
+            );
 
             return;
         }
 
         drawFrame();
 
-        state.animationId = requestAnimationFrame(animate);
+        state.animationId =
+            requestAnimationFrame(animate);
     }
 
     function pauseAnimation() {
-        if (!state.playing) {
-            return;
-        }
-
         state.playing = false;
 
         if (state.animationId) {
@@ -1364,40 +2128,75 @@ Limitations:
         }
 
         state.lastFrame = 0;
+
+        if (state.audio) {
+            state.audio.pause();
+        }
 
         drawFrame();
-
-        setStatus("Animation paused.");
-    }
-
-    function stopAnimation() {
-        state.playing = false;
-
-        if (state.animationId) {
-            cancelAnimationFrame(state.animationId);
-            state.animationId = null;
-        }
-
-        state.lastFrame = 0;
     }
 
     function resetAnimation() {
-        stopAnimation();
+        pauseAnimation();
 
         state.currentTime = 0;
+        state.effects = [];
+
+        if (state.audio) {
+            try {
+                state.audio.currentTime = Math.max(
+                    0,
+                    -getAudioOffset()
+                );
+            } catch (error) {
+                /* Audio metadata may not be ready. */
+            }
+        }
 
         drawFrame();
 
-        setStatus("Animation reset. Press Play to replay.");
+        setStatus(
+            "Playback reset. Press Play to replay."
+        );
     }
 
-    window.addEventListener("resize", resizeCanvas);
+    /* =====================================
+       CLEANUP
+    ===================================== */
 
-    document.addEventListener("visibilitychange", function () {
-        if (document.hidden) {
-            pauseAnimation();
+    window.addEventListener(
+        "resize",
+        resizeCanvas
+    );
+
+    document.addEventListener(
+        "visibilitychange",
+        function () {
+            if (document.hidden) {
+                pauseAnimation();
+            }
         }
-    });
+    );
+
+    window.addEventListener(
+        "pagehide",
+        function () {
+            pauseAnimation();
+
+            if (state.audio) {
+                state.audio.pause();
+            }
+
+            if (state.audioURL) {
+                URL.revokeObjectURL(state.audioURL);
+                state.audioURL = null;
+            }
+        }
+    );
+
+    /* =====================================
+       INITIALIZE
+    ===================================== */
 
     if (document.readyState === "loading") {
         document.addEventListener(
@@ -1407,4 +2206,5 @@ Limitations:
     } else {
         createInterface();
     }
+
 })();
