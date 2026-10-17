@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <!--
+    Project: SonaFrame
+    File: index.html
+    Version: 0.1.0
+
+    Developed with assistance from ChatGPT.
+    Project owner: User.
+
+    Purpose:
+    Main application page and PWA entry point.
+    -->
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#111827"
+    >
+
+    <meta
+        name="description"
+        content="SonaFrame - MIDI tools, music visualization,
+        lyric assistance, tuning planning, and MV creation."
+    >
+
+    <title>SonaFrame — Music Creation Tools</title>
+
+    <link rel="stylesheet" href="styles.css">
+
+    <link
+        rel="manifest"
+        href="manifest.webmanifest"
+    >
+
+    <link
+        rel="icon"
+        href="icon.svg"
+        type="image/svg+xml"
+    >
+</head>
+
+<body>
+
+    <header class="app-header">
+
+        <a class="brand" href="./" aria-label="SonaFrame Home">
+
+            <span class="brand-icon" aria-hidden="true">
+                SF
+            </span>
+
+            <span class="brand-name">
+                SonaFrame
+            </span>
+
+        </a>
+
+        <span
+            id="connection-status"
+            class="status-badge"
+            role="status"
+            aria-live="polite"
+        >
+            Memeriksa...
+        </span>
+
+    </header>
+
+
+    <main class="main-content">
+
+        <section class="hero">
+
+            <p class="eyebrow">
+                YOUR MUSIC WORKSPACE
+            </p>
+
+            <h1>
+                Turn music<br>
+                into something visual.
+            </h1>
+
+            <p class="hero-description">
+                Alat kreatif untuk MIDI, lirik, tuning,
+                visualisasi musik, dan pembuatan MV.
+            </p>
+
+            <div class="hero-actions">
+
+                <button
+                    id="start-button"
+                    class="button button-primary"
+                    type="button"
+                >
+                    Mulai Proyek
+                </button>
+
+                <button
+                    id="about-button"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Tentang
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <section class="workspace-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <p class="eyebrow">WORKSPACE</p>
+
+                    <h2>Ruang Kreatif</h2>
+                </div>
+
+                <span class="version-label">
+                    Prototype 0.1.0
+                </span>
+
+            </div>
+
+
+            <div class="feature-grid">
+
+                <article class="feature-card">
+
+                    <div
+                        class="feature-icon"
+                        aria-hidden="true"
+                    >
+                        ♫
+                    </div>
+
+                    <h3>MIDI Tools</h3>
+
+                    <p>
+                        Membuka, memeriksa, menggabungkan,
+                        dan menyusun berkas MIDI.
+                    </p>
+
+                    <span class="feature-status">
+                        Direncanakan
+                    </span>
+
+                </article>
+
+
+                <article class="feature-card">
+
+                    <div
+                        class="feature-icon"
+                        aria-hidden="true"
+                    >
+                        ▥
+                    </div>
+
+                    <h3>MIDI Visualizer</h3>
+
+                    <p>
+                        Mengubah nada MIDI menjadi
+                        visual piano roll atau falling notes.
+                    </p>
+
+                    <span class="feature-status">
+                        Direncanakan
+                    </span>
+
+                </article>
+
+
+                <article class="feature-card">
+
+                    <div
+                        class="feature-icon"
+                        aria-hidden="true"
+                    >
+                        ♬
+                    </div>
+
+                    <h3>Lyric Assistant</h3>
+
+                    <p>
+                        Membantu mengatur lirik,
+                        mora, suku kata, dan pemenggalan.
+                    </p>
+
+                    <span class="feature-status">
+                        Direncanakan
+                    </span>
+
+                </article>
+
+
+                <article class="feature-card">
+
+                    <div
+                        class="feature-icon"
+                        aria-hidden="true"
+                    >
+                        ◇
+                    </div>
+
+                    <h3>Tuning Assistant</h3>
+
+                    <p>
+                        Merencanakan nada, durasi,
+                        dan ekspresi vokal.
+                    </p>
+
+                    <span class="feature-status">
+                        Direncanakan
+                    </span>
+
+                </article>
+
+
+                <article class="feature-card">
+
+                    <div
+                        class="feature-icon"
+                        aria-hidden="true"
+                    >
+                        ▷
+                    </div>
+
+                    <h3>MV Maker</h3>
+
+                    <p>
+                        Merencanakan MV dari MIDI,
+                        ilustrasi, dan teks lirik.
+                    </p>
+
+                    <span class="feature-status">
+                        Direncanakan
+                    </span>
+
+                </article>
+
+
+                <article class="feature-card">
+
+                    <div
+                        class="feature-icon"
+                        aria-hidden="true"
+                    >
+                        ◉
+                    </div>
+
+                    <h3>Local Projects</h3>
+
+                    <p>
+                        Fondasi untuk menyimpan
+                        dan membuka proyek pengguna.
+                    </p>
+
+                    <span class="feature-status">
+                        Direncanakan
+                    </span>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <section
+            id="workspace-panel"
+            class="workspace-panel"
+            hidden
+        >
+
+            <div class="panel-heading">
+
+                <div>
+                    <p class="eyebrow">PROJECT SETUP</p>
+                    <h2>Proyek Baru</h2>
+                </div>
+
+                <button
+                    id="close-panel-button"
+                    class="icon-button"
+                    type="button"
+                    aria-label="Tutup panel"
+                >
+                    ×
+                </button>
+
+            </div>
+
+            <p>
+                Fondasi proyek sudah disiapkan.
+                Fitur pembuatan proyek lengkap akan
+                ditambahkan pada tahap berikutnya.
+            </p>
+
+            <div class="notice">
+                Belum ada MIDI yang diproses.
+                Ini masih kerangka awal aplikasi.
+            </div>
+
+        </section>
+
+
+        <section
+            id="about-panel"
+            class="workspace-panel"
+            hidden
+        >
+
+            <div class="panel-heading">
+
+                <div>
+                    <p class="eyebrow">ABOUT</p>
+                    <h2>Tentang SonaFrame</h2>
+                </div>
+
+                <button
+                    id="close-about-button"
+                    class="icon-button"
+                    type="button"
+                    aria-label="Tutup informasi"
+                >
+                    ×
+                </button>
+
+            </div>
+
+            <p>
+                SonaFrame adalah proyek aplikasi kreatif
+                untuk membantu proses pengolahan MIDI,
+                pembuatan visual musik, pengaturan lirik,
+                perencanaan tuning, dan pembuatan MV.
+            </p>
+
+            <p>
+                Aplikasi dirancang dengan prioritas
+                performa, kemudahan penggunaan,
+                dan dukungan perangkat dengan
+                sumber daya terbatas.
+            </p>
+
+            <div class="notice">
+                Versi 0.1.0 — Fondasi antarmuka.
+                Fitur musik belum diimplementasikan.
+            </div>
+
+        </section>
+
+
+        <section class="project-note">
+
+            <h2>Dibangun bertahap.</h2>
+
+            <p>
+                Setiap fitur akan dikembangkan,
+                diuji, dan didokumentasikan sebelum
+                kita melanjutkan ke tahap berikutnya.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <footer class="app-footer">
+
+        <p>
+            SonaFrame <span aria-hidden="true">·</span>
+            Version 0.1.0
+        </p>
+
+        <p>
+            Made for music creators.
+        </p>
+
+    </footer>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
