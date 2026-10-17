@@ -1,18 +1,32 @@
 /*
 Project: SonaFrame
 File: sw.js
-Version: 0.5.1
+Version: 0.6.0
 
 Purpose:
 - Offline application shell
 - Versioned application cache
 - Automatic cache updates
 - Removal of outdated SonaFrame caches
+- Network-first navigation
+- Cache-first local application assets
+
+Final target:
+Android APK / WebView compatibility
+
+Note:
+This Service Worker is intended for supported web origins,
+such as HTTPS hosting. Android WebView APK integration
+may require a separate native offline strategy.
 */
 
 "use strict";
 
-var CACHE_NAME = "sonaframe-shell-v0.5.1";
+/* =====================================
+   CACHE CONFIGURATION
+===================================== */
+
+var CACHE_NAME = "sonaframe-shell-v0.6.0";
 
 var APP_FILES = [
     "./",
@@ -77,11 +91,15 @@ self.addEventListener("activate", function (event) {
 self.addEventListener("fetch", function (event) {
     var request = event.request;
 
+    /* Only handle GET requests. */
+
     if (request.method !== "GET") {
         return;
     }
 
     var requestURL = new URL(request.url);
+
+    /* Ignore requests outside this origin. */
 
     if (requestURL.origin !== self.location.origin) {
         return;
@@ -89,8 +107,8 @@ self.addEventListener("fetch", function (event) {
 
     /*
     HTML navigation:
-    try the network first.
-    Use cached HTML when offline.
+    Try the network first.
+    Fall back to the cached application when offline.
     */
 
     if (request.mode === "navigate") {
@@ -98,11 +116,20 @@ self.addEventListener("fetch", function (event) {
             fetch(request)
                 .then(function (response) {
                     if (response && response.ok) {
-                        var clone = response.clone();
+                        var responseCopy = response.clone();
 
                         caches.open(CACHE_NAME)
                             .then(function (cache) {
-                                cache.put("./", clone);
+                                cache.put(
+                                    "./index.html",
+                                    responseCopy
+                                );
+                            })
+                            .catch(function () {
+                                /*
+                                A cache update failure should not
+                                prevent the page from loading.
+                                */
                             });
                     }
 
@@ -110,8 +137,12 @@ self.addEventListener("fetch", function (event) {
                 })
                 .catch(function () {
                     return caches.match("./index.html")
-                        .then(function (cached) {
-                            return cached || caches.match("./");
+                        .then(function (cachedPage) {
+                            if (cachedPage) {
+                                return cachedPage;
+                            }
+
+                            return caches.match("./");
                         });
                 })
         );
@@ -120,17 +151,18 @@ self.addEventListener("fetch", function (event) {
     }
 
     /*
-    Application assets:
-    use the current versioned cache first.
+    Local application assets:
+    Use the current cache first.
+    Download and cache missing assets when online.
     */
 
     event.respondWith(
         caches.open(CACHE_NAME)
             .then(function (cache) {
                 return cache.match(request)
-                    .then(function (cached) {
-                        if (cached) {
-                            return cached;
+                    .then(function (cachedResponse) {
+                        if (cachedResponse) {
+                            return cachedResponse;
                         }
 
                         return fetch(request)
