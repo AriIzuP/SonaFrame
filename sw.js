@@ -26,7 +26,7 @@ may require a separate native offline strategy.
    CACHE CONFIGURATION
 ===================================== */
 
-var CACHE_NAME = "sonaframe-shell-v0.6.0";
+var CACHE_NAME = "sonaframe-shell-v0.7.0";
 
 var APP_FILES = [
     "./",
@@ -35,6 +35,7 @@ var APP_FILES = [
     "./app.js",
     "./midi-merge.js",
     "./midi-visualizer.js",
+    "./lyric-assistant.js",
     "./manifest.webmanifest",
     "./icon.svg"
 ];
