@@ -1,17 +1,17 @@
 /*
 Project: SonaFrame
 File: sw.js
-Version: 0.3.0
+Version: 0.5.0
 
 Purpose:
-- Cache application files for offline use.
-- Activate the latest application version.
-- Remove outdated SonaFrame caches.
+- Offline application shell
+- Versioned application cache
+- Removal of outdated SonaFrame caches
 */
 
 "use strict";
 
-var CACHE_NAME = "sonaframe-shell-v0.4.0";
+var CACHE_NAME = "sonaframe-shell-v0.5.0";
 
 var APP_FILES = [
     "./",
@@ -24,8 +24,9 @@ var APP_FILES = [
     "./icon.svg"
 ];
 
-
-/* INSTALL */
+/* =====================================
+   INSTALL
+===================================== */
 
 self.addEventListener("install", function (event) {
     event.waitUntil(
@@ -39,8 +40,9 @@ self.addEventListener("install", function (event) {
     );
 });
 
-
-/* ACTIVATE */
+/* =====================================
+   ACTIVATE
+===================================== */
 
 self.addEventListener("activate", function (event) {
     event.waitUntil(
@@ -67,8 +69,9 @@ self.addEventListener("activate", function (event) {
     );
 });
 
-
-/* FETCH */
+/* =====================================
+   FETCH
+===================================== */
 
 self.addEventListener("fetch", function (event) {
     var request = event.request;
@@ -79,41 +82,75 @@ self.addEventListener("fetch", function (event) {
 
     var requestURL = new URL(request.url);
 
-    if (
-        requestURL.origin !== self.location.origin
-    ) {
+    if (requestURL.origin !== self.location.origin) {
         return;
     }
 
+    /*
+    Navigation:
+    try the network first so the latest HTML
+    can be obtained when the device is online.
+    Fall back to the cached application shell offline.
+    */
+
+    if (request.mode === "navigate") {
+        event.respondWith(
+            fetch(request)
+                .then(function (response) {
+                    if (response && response.ok) {
+                        var clone = response.clone();
+
+                        caches.open(CACHE_NAME)
+                            .then(function (cache) {
+                                cache.put("./", clone);
+                            });
+                    }
+
+                    return response;
+                })
+                .catch(function () {
+                    return caches.match("./index.html")
+                        .then(function (cached) {
+                            return cached ||
+                                caches.match("./");
+                        });
+                })
+        );
+
+        return;
+    }
+
+    /*
+    Application assets:
+    use the active versioned cache first.
+    New versions receive a new cache name.
+    */
+
     event.respondWith(
-        caches.match(request)
-            .then(function (cachedResponse) {
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
-
-                return fetch(request).then(
-                    function (response) {
-                        if (
-                            response &&
-                            response.ok &&
-                            response.type === "basic"
-                        ) {
-                            var responseClone =
-                                response.clone();
-
-                            caches.open(CACHE_NAME)
-                                .then(function (cache) {
-                                    cache.put(
-                                        request,
-                                        responseClone
-                                    );
-                                });
+        caches.open(CACHE_NAME)
+            .then(function (cache) {
+                return cache.match(request)
+                    .then(function (cachedResponse) {
+                        if (cachedResponse) {
+                            return cachedResponse;
                         }
 
-                        return response;
-                    }
-                );
+                        return fetch(request)
+                            .then(function (response) {
+                                if (
+                                    response &&
+                                    response.ok &&
+                                    response.type === "basic"
+                                ) {
+                                    cache.put(
+                                        request,
+                                        response.clone()
+                                    );
+                                }
+
+                                return response;
+                            });
+                    });
             })
     );
 });
