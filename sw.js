@@ -1,17 +1,18 @@
 /*
 Project: SonaFrame
 File: sw.js
-Version: 0.5.0
+Version: 0.5.1
 
 Purpose:
 - Offline application shell
 - Versioned application cache
+- Automatic cache updates
 - Removal of outdated SonaFrame caches
 */
 
 "use strict";
 
-var CACHE_NAME = "sonaframe-shell-v0.5.0";
+var CACHE_NAME = "sonaframe-shell-v0.5.1";
 
 var APP_FILES = [
     "./",
@@ -87,10 +88,9 @@ self.addEventListener("fetch", function (event) {
     }
 
     /*
-    Navigation:
-    try the network first so the latest HTML
-    can be obtained when the device is online.
-    Fall back to the cached application shell offline.
+    HTML navigation:
+    try the network first.
+    Use cached HTML when offline.
     */
 
     if (request.mode === "navigate") {
@@ -111,8 +111,7 @@ self.addEventListener("fetch", function (event) {
                 .catch(function () {
                     return caches.match("./index.html")
                         .then(function (cached) {
-                            return cached ||
-                                caches.match("./");
+                            return cached || caches.match("./");
                         });
                 })
         );
@@ -122,17 +121,16 @@ self.addEventListener("fetch", function (event) {
 
     /*
     Application assets:
-    use the active versioned cache first.
-    New versions receive a new cache name.
+    use the current versioned cache first.
     */
 
     event.respondWith(
         caches.open(CACHE_NAME)
             .then(function (cache) {
                 return cache.match(request)
-                    .then(function (cachedResponse) {
-                        if (cachedResponse) {
-                            return cachedResponse;
+                    .then(function (cached) {
+                        if (cached) {
+                            return cached;
                         }
 
                         return fetch(request)
