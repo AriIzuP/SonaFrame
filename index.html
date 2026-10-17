@@ -4,45 +4,45 @@
     <!--
     Project: SonaFrame
     File: index.html
-    Version: 0.3.0
-    Purpose: Main application and MIDI workspace.
+    Version: 0.6.0
+
+    Stage:
+    Mobile-first studio home screen.
+
+    Final target:
+    Android APK.
     -->
 
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
     >
 
-    <meta
-        name="theme-color"
-        content="#111827"
-    >
+    <meta name="theme-color" content="#090b14">
 
     <meta
         name="description"
-        content="SonaFrame is a music creation workspace for MIDI tools, lyrics, tuning, visualization, and music video production."
+        content="SonaFrame is an offline-first music workspace for MIDI tools and music visualization."
     >
 
     <meta name="application-name" content="SonaFrame">
 
-    <title>SonaFrame — Music Creation Tools</title>
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <title>SonaFrame — Music Studio</title>
 
     <link rel="stylesheet" href="styles.css">
 
     <link rel="manifest" href="manifest.webmanifest">
 
-    <link
-        rel="icon"
-        href="icon.svg"
-        type="image/svg+xml"
-    >
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
 </head>
 
 <body>
 
-    <!-- HEADER -->
+    <!-- APP HEADER -->
 
     <header class="app-header">
 
@@ -55,8 +55,9 @@
                 SF
             </span>
 
-            <span class="brand-name">
-                SonaFrame
+            <span class="brand-text">
+                <strong class="brand-name">SonaFrame</strong>
+                <span class="brand-caption">MUSIC WORKSPACE</span>
             </span>
         </a>
 
@@ -66,7 +67,7 @@
             role="status"
             aria-live="polite"
         >
-            Checking connection...
+            Checking...
         </span>
 
     </header>
@@ -78,224 +79,266 @@
 
         <section class="hero">
 
-            <p class="eyebrow">
-                YOUR MUSIC WORKSPACE
-            </p>
+            <div class="hero-content">
 
-            <h1>
-                Turn music<br>
-                into something visual.
-            </h1>
+                <p class="eyebrow">
+                    YOUR PERSONAL MUSIC STUDIO
+                </p>
 
-            <p class="hero-description">
-                A creative workspace for MIDI,
-                lyrics, vocal tuning, music visualization,
-                and music video production.
-            </p>
+                <h1>
+                    Create.<br>
+                    Visualize.<br>
+                    <span class="gradient-text">Make it yours.</span>
+                </h1>
 
-            <div class="hero-actions">
+                <p class="hero-description">
+                    A lightweight workspace for music creators.
+                    Work with MIDI files and turn your musical
+                    ideas into something visual.
+                </p>
 
-                <button
-                    id="start-button"
-                    class="button button-primary"
-                    type="button"
-                >
-                    Start a Project
-                </button>
+                <div class="hero-actions">
 
-                <button
-                    id="about-button"
-                    class="button button-secondary"
-                    type="button"
-                >
-                    About SonaFrame
-                </button>
+                    <button
+                        id="start-button"
+                        class="button button-primary"
+                        type="button"
+                    >
+                        <span aria-hidden="true">＋</span>
+                        Start a Project
+                    </button>
+
+                    <button
+                        id="about-button"
+                        class="button button-secondary"
+                        type="button"
+                    >
+                        About SonaFrame
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="hero-decoration" aria-hidden="true">
+
+                <div class="studio-orb orb-one"></div>
+                <div class="studio-orb orb-two"></div>
+
+                <div class="waveform">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <span class="decoration-label">
+                    SOUND · VISION · CREATIVITY
+                </span>
 
             </div>
 
         </section>
 
 
-        <!-- WORKSPACE -->
+        <!-- ACTIVE TOOLS -->
 
-        <section class="workspace-section">
+        <section
+            id="tools-section"
+            class="workspace-section"
+        >
 
             <div class="section-heading">
 
                 <div>
-                    <p class="eyebrow">WORKSPACE</p>
+                    <p class="eyebrow">YOUR WORKSPACE</p>
                     <h2>Creative Tools</h2>
+                    <p class="section-description">
+                        Your music tools, all in one place.
+                    </p>
                 </div>
 
-                <span class="version-label">
-                    Prototype 0.3.0
+                <span class="section-indicator">
+                    <span class="indicator-dot"></span>
+                    ACTIVE
                 </span>
 
             </div>
 
 
+            <!--
+            JavaScript modules add their feature cards here.
+            Keep this class name unchanged.
+            -->
+
             <div class="feature-grid">
 
-                <!-- MIDI TOOLS -->
+                <!-- MIDI INFORMATION TOOL -->
 
-                <article class="feature-card">
+                <article class="feature-card feature-card-main">
 
-                    <div
-                        class="feature-icon"
-                        aria-hidden="true"
-                    >
-                        ♫
+                    <div class="card-topline">
+
+                        <div class="feature-icon icon-purple"
+                             aria-hidden="true">
+                            ♫
+                        </div>
+
+                        <span class="tool-number">TOOL 01</span>
+
                     </div>
 
                     <h3>MIDI Tools</h3>
 
                     <p>
-                        Import MIDI files and inspect
-                        basic song information directly
-                        in your browser.
+                        Inspect MIDI files, check track counts,
+                        note counts, tempo, duration, and other
+                        basic song information.
                     </p>
 
                     <button
                         id="open-midi-button"
-                        class="button button-primary"
+                        class="button button-primary card-button"
                         type="button"
                     >
                         Open MIDI Tools
+                        <span aria-hidden="true">→</span>
                     </button>
 
                 </article>
 
-
-                <!-- MIDI VISUALIZER -->
-
-                <article class="feature-card">
-
-                    <div
-                        class="feature-icon"
-                        aria-hidden="true"
-                    >
-                        ▥
-                    </div>
-
-                    <h3>MIDI Visualizer</h3>
-
-                    <p>
-                        Transform MIDI notes into
-                        piano roll visualizations
-                        or falling-note animations.
-                    </p>
-
-                    <span class="feature-status">
-                        Planned
-                    </span>
-
-                </article>
-
-
-                <!-- LYRIC ASSISTANT -->
-
-                <article class="feature-card">
-
-                    <div
-                        class="feature-icon"
-                        aria-hidden="true"
-                    >
-                        ♬
-                    </div>
-
-                    <h3>Lyric Assistant</h3>
-
-                    <p>
-                        Organize lyrics, mora,
-                        syllables, and word
-                        segmentation.
-                    </p>
-
-                    <span class="feature-status">
-                        Planned
-                    </span>
-
-                </article>
-
-
-                <!-- TUNING ASSISTANT -->
-
-                <article class="feature-card">
-
-                    <div
-                        class="feature-icon"
-                        aria-hidden="true"
-                    >
-                        ◇
-                    </div>
-
-                    <h3>Tuning Assistant</h3>
-
-                    <p>
-                        Plan vocal pitches,
-                        note durations, and
-                        expressive parameters.
-                    </p>
-
-                    <span class="feature-status">
-                        Planned
-                    </span>
-
-                </article>
-
-
-                <!-- MV MAKER -->
-
-                <article class="feature-card">
-
-                    <div
-                        class="feature-icon"
-                        aria-hidden="true"
-                    >
-                        ▷
-                    </div>
-
-                    <h3>Music Video Maker</h3>
-
-                    <p>
-                        Build music video projects
-                        using MIDI, illustrations,
-                        and lyric text.
-                    </p>
-
-                    <span class="feature-status">
-                        Planned
-                    </span>
-
-                </article>
-
-
-                <!-- LOCAL PROJECTS -->
-
-                <article class="feature-card">
-
-                    <div
-                        class="feature-icon"
-                        aria-hidden="true"
-                    >
-                        ◉
-                    </div>
-
-                    <h3>Local Projects</h3>
-
-                    <p>
-                        Prepare, save, and reopen
-                        music projects directly
-                        on your device.
-                    </p>
-
-                    <span class="feature-status">
-                        Planned
-                    </span>
-
-                </article>
-
             </div>
+
+        </section>
+
+
+        <!-- PLANNED TOOLS -->
+
+        <section class="planned-section">
+
+            <details class="planned-details">
+
+                <summary class="planned-summary">
+
+                    <span class="planned-summary-main">
+
+                        <span class="planned-icon"
+                              aria-hidden="true">
+                            ◇
+                        </span>
+
+                        <span>
+                            <strong>Future Studio Tools</strong>
+                            <small>Features planned for future updates</small>
+                        </span>
+
+                    </span>
+
+                    <span class="planned-chevron"
+                          aria-hidden="true">
+                        +
+                    </span>
+
+                </summary>
+
+
+                <div class="planned-grid">
+
+                    <article class="planned-card">
+
+                        <div class="planned-card-icon"
+                             aria-hidden="true">
+                            ♬
+                        </div>
+
+                        <h3>Lyric Assistant</h3>
+
+                        <p>
+                            Organize lyrics, mora, syllables,
+                            and word segmentation.
+                        </p>
+
+                        <span class="feature-status">
+                            PLANNED
+                        </span>
+
+                    </article>
+
+
+                    <article class="planned-card">
+
+                        <div class="planned-card-icon"
+                             aria-hidden="true">
+                            ◇
+                        </div>
+
+                        <h3>Tuning Assistant</h3>
+
+                        <p>
+                            Plan vocal pitches, note durations,
+                            and expressive parameters.
+                        </p>
+
+                        <span class="feature-status">
+                            PLANNED
+                        </span>
+
+                    </article>
+
+
+                    <article class="planned-card">
+
+                        <div class="planned-card-icon"
+                             aria-hidden="true">
+                            ▷
+                        </div>
+
+                        <h3>Music Video Maker</h3>
+
+                        <p>
+                            Create music video projects using
+                            MIDI, illustrations, and lyrics.
+                        </p>
+
+                        <span class="feature-status">
+                            PLANNED
+                        </span>
+
+                    </article>
+
+
+                    <article class="planned-card">
+
+                        <div class="planned-card-icon"
+                             aria-hidden="true">
+                            ◉
+                        </div>
+
+                        <h3>Local Projects</h3>
+
+                        <p>
+                            Prepare and manage projects
+                            stored on your device.
+                        </p>
+
+                        <span class="feature-status">
+                            PLANNED
+                        </span>
+
+                    </article>
+
+                </div>
+
+            </details>
 
         </section>
 
@@ -328,19 +371,19 @@
 
             <p>
                 The project foundation is ready.
-                Full project creation features
-                will be introduced in a future update.
+                Full project creation features will
+                be introduced in a future update.
             </p>
 
             <div class="notice">
-                You can start by importing a MIDI
-                file through MIDI Tools.
+                You can start by importing a MIDI file
+                through MIDI Tools.
             </div>
 
         </section>
 
 
-        <!-- MIDI TOOLS -->
+        <!-- MIDI TOOLS PANEL -->
 
         <section
             id="midi-panel"
@@ -366,19 +409,16 @@
 
             </div>
 
-
             <p>
                 Select a MIDI file from your device
                 to inspect its song information.
             </p>
 
-
             <div class="notice">
-                MIDI files are processed locally
-                in your browser. Your files do not
-                need to be uploaded to a server.
+                MIDI files are processed locally.
+                Your files do not need to be uploaded
+                to a server.
             </div>
-
 
             <div class="midi-file-area">
 
@@ -401,7 +441,6 @@
 
             </div>
 
-
             <div
                 id="midi-status"
                 class="notice"
@@ -410,7 +449,6 @@
             >
                 No MIDI file selected.
             </div>
-
 
             <div
                 id="midi-results"
@@ -466,7 +504,6 @@
 
             </div>
 
-
             <div class="notice">
                 MIDI information will appear after
                 a file has been successfully analyzed.
@@ -475,7 +512,7 @@
         </section>
 
 
-        <!-- ABOUT -->
+        <!-- ABOUT PANEL -->
 
         <section
             id="about-panel"
@@ -502,22 +539,21 @@
             </div>
 
             <p>
-                SonaFrame is a creative application
-                for MIDI processing, music visualization,
-                lyric organization, vocal tuning
-                planning, and music video production.
+                SonaFrame is a creative workspace for MIDI
+                processing, music visualization, lyric
+                organization, vocal tuning planning,
+                and music video production.
             </p>
 
             <p>
-                The application prioritizes
-                performance, usability, offline access,
-                and compatibility with devices
+                The long-term goal is an Android application
+                designed for offline use and devices
                 with limited resources.
             </p>
 
             <div class="notice">
-                Version 0.3.0 — MIDI Tools and
-                MIDI Merge development.
+                Prototype 0.6.0 — Mobile-first interface
+                and workspace organization.
             </div>
 
         </section>
@@ -527,13 +563,19 @@
 
         <section class="project-note">
 
-            <h2>Built step by step.</h2>
+            <div class="project-note-symbol"
+                 aria-hidden="true">
+                ✦
+            </div>
 
-            <p>
-                Every feature is developed,
-                tested, and documented before
-                moving on to the next stage.
-            </p>
+            <div>
+                <h2>Made for music creators.</h2>
+
+                <p>
+                    Built step by step, with a focus on
+                    creativity, performance, and offline use.
+                </p>
+            </div>
 
         </section>
 
@@ -544,13 +586,16 @@
 
     <footer class="app-footer">
 
-        <p>
-            SonaFrame <span aria-hidden="true">·</span>
-            Version 0.3.0
+        <p class="footer-brand">
+            SonaFrame
         </p>
 
         <p>
-            Made for music creators.
+            A lightweight music workspace.
+        </p>
+
+        <p class="footer-version">
+            PROTOTYPE 0.6.0
         </p>
 
     </footer>
