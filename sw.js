@@ -1,18 +1,17 @@
 /*
 Project: SonaFrame
 File: sw.js
-Version: 0.1.0
-
-Developed with assistance from ChatGPT.
-Project owner: User.
+Version: 0.2.0
 
 Purpose:
-Cache the initial application shell for offline access.
+- Cache application files for offline use.
+- Activate the latest application version.
+- Remove outdated SonaFrame caches.
 */
 
 "use strict";
 
-var CACHE_NAME = "sonaframe-shell-v0.1.0";
+var CACHE_NAME = "sonaframe-shell-v0.2.0";
 
 var APP_FILES = [
     "./",
@@ -23,6 +22,8 @@ var APP_FILES = [
     "./icon.svg"
 ];
 
+
+/* INSTALL */
 
 self.addEventListener("install", function (event) {
     event.waitUntil(
@@ -36,6 +37,8 @@ self.addEventListener("install", function (event) {
     );
 });
 
+
+/* ACTIVATE */
 
 self.addEventListener("activate", function (event) {
     event.waitUntil(
@@ -63,6 +66,8 @@ self.addEventListener("activate", function (event) {
 });
 
 
+/* FETCH */
+
 self.addEventListener("fetch", function (event) {
     var request = event.request;
 
@@ -72,7 +77,9 @@ self.addEventListener("fetch", function (event) {
 
     var requestURL = new URL(request.url);
 
-    if (requestURL.origin !== self.location.origin) {
+    if (
+        requestURL.origin !== self.location.origin
+    ) {
         return;
     }
 
@@ -83,7 +90,28 @@ self.addEventListener("fetch", function (event) {
                     return cachedResponse;
                 }
 
-                return fetch(request);
+                return fetch(request).then(
+                    function (response) {
+                        if (
+                            response &&
+                            response.ok &&
+                            response.type === "basic"
+                        ) {
+                            var responseClone =
+                                response.clone();
+
+                            caches.open(CACHE_NAME)
+                                .then(function (cache) {
+                                    cache.put(
+                                        request,
+                                        responseClone
+                                    );
+                                });
+                        }
+
+                        return response;
+                    }
+                );
             })
     );
 });
