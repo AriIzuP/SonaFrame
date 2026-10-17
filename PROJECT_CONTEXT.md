@@ -3,123 +3,189 @@
 ## 1. Project Identity
 
 Project name: SonaFrame
+Repository: https://github.com/AriIzuP/SonaFrame
+Live website: https://ariizup.github.io/SonaFrame/
 Current version: 0.1.0
-Current phase: Phase 0 — Foundation
-Status: Initial scaffold created; device testing pending.
+Current phase: Phase 0 — Foundation (initial testing completed by user; cleanup and verification remain)
+Next development phase: Phase 1 — MIDI Import and Inspection
 
 Description:
-A lightweight creative music application for MIDI
-processing, music visualization, lyric assistance,
-tuning planning, and music-video creation.
+SonaFrame is a lightweight, phone-friendly creative
+music application for MIDI processing, visualization,
+lyric assistance, tuning planning, and music-video
+creation.
 
-The project must not be restricted to Teto, UTAU,
+The application must not be restricted to Teto, UTAU,
 Vocaloid, or a particular music producer.
 
 ## 2. Target Environment
 
-Initial target:
+Primary target device:
 - Android 7.1.1
-- Device with approximately 2 GB RAM
+- Approximately 2 GB RAM
 - Limited internal storage
 - Limited mobile data
 - Browser-based access
+- Offline-friendly operation
 
-Initial approach:
+Development environment:
+- Android phone
+- anWriter HTML Editor
+- Chrome browser
+- GitHub repository for source control
+
+Technology:
 - HTML
 - CSS
 - Vanilla JavaScript
 - Progressive Web App (PWA)
 - Local-first design where practical
 
-Compatibility must be tested on the actual target device.
+Design priorities:
+1. Keep the application lightweight.
+2. Minimize unnecessary dependencies.
+3. Avoid unnecessary network requests.
+4. Preserve offline functionality.
+5. Make controls usable on a phone.
+6. Avoid features that consume excessive RAM.
+7. Test compatibility on the actual target device.
 
 ## 3. Official Roadmap
 
-Phase 0:
-Foundation, initial interface, project structure,
+Phase 0 — Foundation:
+Initial interface, project structure, responsive styling,
 PWA manifest, service worker, and documentation.
 
-Phase 1:
-MIDI import and basic file inspection.
+Phase 1 — MIDI Import and Inspection:
+Allow users to select MIDI files and inspect basic
+information such as tracks, tempo when available,
+duration when calculable, and note events.
 
-Phase 2:
-MIDI track merging, sequential MIDI arrangement,
-and MIDI export.
+Phase 2 — MIDI Editing and Export:
+Merge MIDI files, arrange MIDI sections sequentially
+or simultaneously, and export MIDI files.
 
-Phase 3:
-MIDI visualizer with piano roll or falling notes,
-playback controls, colors, zoom, and lightweight effects.
+Phase 3 — MIDI Visualizer:
+Piano roll or falling-note visualization, playback
+controls, colors, zoom, and lightweight effects.
 
-Phase 4:
-Local project management and persistence.
+Phase 4 — Local Project Management:
+Save and reopen projects locally, with clear handling
+of browser storage limitations.
 
-Phase 5:
-Lyric editor and lyric timing tools.
+Phase 5 — Lyric Editor:
+Create and edit lyrics and organize lyric sections.
 
-Phase 6:
-Lyric assistance, Japanese mora support,
-multilingual syllable helpers, and configurable profiles.
+Phase 6 — Lyric Assistance:
+Japanese mora support, multilingual syllable helpers,
+and configurable lyric profiles.
 
-Phase 7:
-Tuning planner and verified tuning-related exports.
+Phase 7 — Tuning Planner:
+Plan vocal tuning and provide verified tuning-related
+exports where technically possible.
 
-Phase 8:
-MIDI-based MV creation.
+Phase 8 — MIDI-Based MV:
+Create music-video arrangements from MIDI data.
 
-Phase 9:
-Illustrated MV and hybrid MV workflows.
+Phase 9 — Illustrated and Hybrid MV:
+Combine illustrations, lyrics, MIDI visualization,
+and other visual elements.
 
-Phase 10:
-Video export, performance optimization,
-compatibility testing, and final improvements.
+Phase 10 — Video Export and Optimization:
+Export video where feasible, optimize performance,
+test compatibility, and improve the application.
 
 Do not skip prerequisites without documenting
 the reason and impact.
 
 ## 4. Current File Structure
 
+Expected project structure:
+
 SonaFrame/
 - index.html
   Main application interface and PWA entry point.
 
 - styles.css
-  Responsive dark interface and layout styling.
+  Responsive interface styling.
 
 - app.js
-  Basic interface interactions, connection status,
-  and Service Worker registration.
+  Application interactions and Service Worker
+  registration logic.
 
 - manifest.webmanifest
-  PWA metadata and initial icon declaration.
+  PWA metadata and icon declaration.
 
 - sw.js
-  Initial application-shell cache and offline fallback
-  behavior for previously cached GET requests.
+  Service Worker and application-shell caching.
 
 - icon.svg
-  Initial application icon.
+  Intended application icon filename.
 
 - PROJECT_CONTEXT.md
-  Project status, decisions, roadmap, tests, and next task.
+  Project status, roadmap, decisions, testing,
+  and instructions for future development.
+
+IMPORTANT:
+The repository was previously inspected and the icon
+file was found under the filename icon.svg.html,
+while index.html and manifest.webmanifest reference
+icon.svg.
+
+The filename mismatch must be corrected.
+Do not assume this issue is fixed until the repository
+and deployed website have been checked again.
 
 ## 5. Implemented in Version 0.1.0
 
-- Initial application branding.
-- Responsive interface.
-- Feature overview cards.
-- Basic navigation between informational panels.
+The initial foundation includes:
+- Application branding.
+- Initial interface and feature overview.
+- Responsive CSS styling.
+- Basic navigation and interface interactions.
 - Online/offline connection indicator.
 - PWA manifest.
-- Initial Service Worker cache implementation.
-- Initial SVG icon.
+- Initial Service Worker implementation.
+- Initial SVG icon content.
+- GitHub repository and public deployment.
 - Project documentation.
 
-## 6. Not Implemented Yet
+## 6. Confirmed User-Reported Results
 
-- MIDI import.
-- MIDI parsing.
+The user reports that:
+- The website is published successfully.
+- The website opens at the GitHub Pages address.
+- The page appears normal and visually satisfactory.
+- The application can be added to the phone's home screen.
+- The application can be opened offline.
+- Chrome's Desktop site option was enabled, and the
+  user reports that the resulting appearance is good.
+
+These results are based on user-reported testing.
+
+Further testing is still needed to determine:
+- Whether the Service Worker installed successfully.
+- Which files are cached for offline startup.
+- Whether all application features work offline.
+- Whether the interface also works correctly with
+  Chrome's Desktop site option disabled.
+- Whether the icon and manifest references resolve.
+- Whether offline behavior persists after clearing
+  browser data or reinstalling the application.
+
+Do not claim these additional checks have passed
+until they have actually been performed.
+
+## 7. Not Implemented Yet
+
+The following features have not been confirmed as
+implemented:
+
+- MIDI import and parsing.
+- MIDI track inspection.
 - MIDI playback.
 - MIDI merging.
+- Sequential MIDI arrangement.
 - MIDI export.
 - MIDI visualizer.
 - Lyric editor.
@@ -128,87 +194,148 @@ SonaFrame/
 - Tuning assistance.
 - Voicebank integration.
 - MV timeline.
-- Video rendering/export.
-- Complete project persistence.
-- Verified offline startup.
+- Video rendering and export.
+- Complete local project persistence.
 
 Do not present planned features as working features.
 
-## 7. Testing Status
+## 8. Outstanding Issues
 
-No actual-device test results recorded yet.
+### Issue 1 — Icon filename mismatch
 
-Pending tests:
-1. Open the application through a suitable local server
-   or HTTPS deployment.
-2. Check the interface on the target Android browser.
-3. Check that the feature cards fit the screen.
-4. Test the Start Project button.
-5. Test the About button.
-6. Check console errors where developer tools are available.
-7. Confirm Service Worker installation.
-8. Confirm that required files are cached.
-9. Test offline reopening after successful caching.
-10. Check browser-specific PWA installation support.
+Previously observed:
+- Actual repository filename: icon.svg.html
+- Expected filename: icon.svg
+- References in index.html and manifest.webmanifest:
+  icon.svg
 
-Record actual results after testing.
-Do not mark a test as passed without evidence.
+Next action:
+Rename the existing icon file to icon.svg.
+Preserve its SVG content.
+Check the references in index.html and
+manifest.webmanifest afterward.
 
-## 8. Development Rules
+### Issue 2 — PWA and offline verification
+
+The user reports successful offline access.
+
+Next action:
+Verify the deployed application, Service Worker,
+cached files, and offline startup without disrupting
+the currently working version.
+
+### Issue 3 — Mobile and desktop layout
+
+The user reports that the layout looks good with
+Chrome's Desktop site option enabled.
+
+Next action:
+Check the regular mobile-browser layout as well.
+Preserve both layouts where practical.
+
+## 9. Development Rules
 
 - Implement one roadmap phase at a time.
-- Inspect the latest code before modifying it.
-- If the necessary latest source is unavailable,
-  ask the user to provide it.
+- Inspect the latest source before modifying it.
+- If the latest source is unavailable, ask the user
+  to provide the complete current file.
 - Provide complete replacement files where practical.
-- Identify each file and its location.
+- Identify each filename and its location.
+- Prefer complete copy-pasteable code.
 - Preserve existing working functionality.
-- Minimize dependencies and unnecessary network requests.
-- Optimize for low-memory devices.
+- Minimize dependencies and network requests.
+- Optimize for low-memory Android devices.
 - Explain compatibility limitations honestly.
-- Do not claim untested features work.
-- Update this file after significant changes.
-- Encourage saving working versions to GitHub.
-- Never claim a commit or upload occurred unless it did.
+- Never claim an untested feature works.
+- Update this document after significant progress.
+- Keep a record of known bugs and test results.
+- Do not assume that a previous preview guarantees
+  the deployed application works identically.
+- Never claim a GitHub commit or upload occurred
+  unless it actually happened.
 
-## 9. Version History
+## 10. Version History
 
-### 0.1.0 — Initial foundation
+### 0.1.0 — Initial Foundation
 
 Created:
-- Initial interface.
+- Initial application interface.
 - CSS styling.
 - Basic JavaScript interactions.
 - PWA manifest.
-- Initial Service Worker.
-- SVG icon.
-- Project context documentation.
+- Service Worker implementation.
+- Initial SVG icon content.
+- Project documentation.
 
-Testing:
-Pending actual-device verification.
+Deployment:
+- Published using GitHub Pages.
+- Public website:
+  https://ariizup.github.io/SonaFrame/
 
-## 10. Next Task
+User-reported tests:
+- Online access: successful.
+- Home-screen addition: successful.
+- Offline opening: successful.
+- Visual appearance with Desktop site enabled:
+  satisfactory.
 
-Complete Phase 0 verification.
+Remaining:
+- Correct the icon filename mismatch.
+- Verify Service Worker and offline behavior.
+- Check the regular mobile layout.
+- Begin MIDI import after the foundation cleanup.
 
-After the user provides test results:
-- Fix any startup or layout issues.
-- Verify the Service Worker and offline behavior.
-- Update this document with confirmed results.
+## 11. Next Tasks
 
-Only after the foundation is sufficiently verified
-should Phase 1 begin.
+Recommended order:
 
-## 11. Instructions for a New Conversation
+1. Update and commit this project context document.
+2. Rename icon.svg.html to icon.svg.
+3. Verify the icon references in the manifest
+   and HTML.
+4. Recheck the deployed website.
+5. Verify Service Worker and offline behavior.
+6. Check the regular mobile layout.
+7. Begin Phase 1: MIDI import and inspection.
 
-Read this document and inspect the latest relevant source files.
+Phase 1 initial goals:
+- Select a MIDI file from phone storage.
+- Read MIDI file data locally.
+- Display basic file information.
+- Inspect tracks and note events.
+- Display tempo when available.
+- Calculate duration when the MIDI data allows it.
+- Handle invalid or unsupported files gracefully.
+- Avoid uploading private MIDI files to a server.
+- Keep processing lightweight for the target phone.
 
-Use this document as the primary project status reference.
+Do not begin by implementing every MIDI feature at
+once. Start with reliable file selection and basic
+inspection, then expand incrementally.
 
-Do not assume the entire previous conversation is available.
+## 12. Instructions for a New Conversation
 
-First determine the current phase, latest known working
-version, outstanding bugs, and next task.
+Read this document first, then inspect the latest
+relevant source files in the repository.
 
-Continue from that point without restarting the project
-or replacing working functionality unnecessarily.
+Use this document as the primary project status
+reference, but verify important details against
+the current source.
+
+Determine:
+- The current development phase.
+- The latest known working version.
+- The current file structure.
+- Confirmed test results.
+- Outstanding issues.
+- The next task.
+
+Continue from the current state without restarting
+the project or unnecessarily replacing working code.
+
+The project owner works primarily from an Android
+phone and prefers complete, copy-pasteable files
+instead of fragmented code snippets.
+
+Prioritize stability, low resource consumption,
+offline usability, and incremental development.
