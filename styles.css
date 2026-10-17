@@ -1,32 +1,55 @@
 /*
 Project: SonaFrame
 File: styles.css
-Version: 0.1.0
+Version: 0.2.0
 
-Developed with assistance from ChatGPT.
-Project owner: User.
+Stage: Mobile Studio UI Revamp
 
-Purpose:
-Responsive application styling.
+Features:
+- Mobile-first responsive layout
+- Dark neon studio theme
+- Touch-friendly controls
+- Responsive feature cards and panels
+- Lightweight visual styling
+- Compatible with existing JavaScript modules
+
+Project owner: AriIzuP
 */
+
+/* ========================================
+   1. THEME
+======================================== */
 
 :root {
     color-scheme: dark;
 
-    --background: #0b1020;
-    --surface: #111827;
-    --surface-light: #192338;
+    --background: #080b14;
+    --surface: #101525;
+    --surface-light: #191f35;
+    --surface-hover: #202842;
 
-    --text: #f1f5f9;
-    --muted: #a6b1c4;
+    --text: #f4f5ff;
+    --muted: #a2abc5;
 
-    --accent: #a78bfa;
-    --accent-blue: #60a5fa;
+    --accent: #b18cff;
+    --accent-blue: #65b8ff;
+    --accent-pink: #f38bff;
+    --accent-green: #65e6c4;
 
-    --border: #2a354b;
+    --border: #29314a;
+    --border-glow: #55447f;
+
+    --danger: #ff7185;
 
     --radius: 16px;
+    --radius-small: 11px;
+
+    --content-width: 1050px;
 }
+
+/* ========================================
+   2. RESET
+======================================== */
 
 * {
     box-sizing: border-box;
@@ -35,14 +58,21 @@ Responsive application styling.
 html {
     min-height: 100%;
     background: var(--background);
+    scroll-behavior: smooth;
 }
 
 body {
+    min-height: 100vh;
     margin: 0;
 
-    min-height: 100vh;
+    background:
+        radial-gradient(
+            ellipse at 50% 0%,
+            rgba(102, 75, 180, 0.12),
+            transparent 55%
+        ),
+        var(--background);
 
-    background: var(--background);
     color: var(--text);
 
     font-family:
@@ -52,6 +82,16 @@ body {
         sans-serif;
 
     line-height: 1.6;
+
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
 }
 
 button,
@@ -60,7 +100,7 @@ a {
 }
 
 button {
-    font: inherit;
+    color: inherit;
 }
 
 a {
@@ -68,85 +108,129 @@ a {
     text-decoration: none;
 }
 
+img,
+canvas {
+    max-width: 100%;
+}
+
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
     outline: 2px solid var(--accent-blue);
     outline-offset: 3px;
 }
 
+[hidden] {
+    display: none !important;
+}
+
+/* ========================================
+   3. HEADER
+======================================== */
+
 .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
 
     gap: 12px;
 
-    padding: 16px 5%;
+    padding: 11px 5%;
 
     border-bottom: 1px solid var(--border);
 
-    background: var(--surface);
+    background: rgba(12, 16, 29, 0.97);
 }
 
 .brand {
     display: inline-flex;
     align-items: center;
+
+    min-width: 0;
+
     gap: 10px;
 
-    font-weight: 800;
     font-size: 18px;
+    font-weight: 800;
 }
 
 .brand-icon {
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
+
+    flex-shrink: 0;
 
     width: 38px;
     height: 38px;
 
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
 
     background: var(--accent);
-    color: #111827;
+    color: #171025;
 
     font-size: 14px;
     font-weight: 900;
 }
 
 .brand-name {
-    letter-spacing: -0.4px;
+    overflow: hidden;
+
+    letter-spacing: -0.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .status-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
 
     padding: 5px 10px;
 
     border: 1px solid var(--border);
     border-radius: 999px;
 
+    background: var(--surface);
     color: var(--muted);
 
     font-size: 11px;
     font-weight: 700;
 }
 
+/* ========================================
+   4. MAIN CONTENT
+======================================== */
+
 .main-content {
     width: 100%;
-    max-width: 1050px;
+    max-width: var(--content-width);
 
     margin: 0 auto;
-    padding: 28px 5% 40px;
+    padding: 22px 5% 38px;
 }
 
+/* ========================================
+   5. HERO SECTION
+======================================== */
+
 .hero {
-    padding: 28px 0 40px;
+    position: relative;
+
+    padding: 28px 0 36px;
 }
 
 .eyebrow {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
 
     color: var(--accent);
 
@@ -154,6 +238,7 @@ a:focus-visible {
     font-weight: 800;
 
     letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .hero h1 {
@@ -162,31 +247,45 @@ a:focus-visible {
     margin: 0;
 
     font-size: clamp(32px, 8vw, 58px);
-    line-height: 1.12;
+    font-weight: 850;
 
+    line-height: 1.12;
     letter-spacing: -1.8px;
+
+    overflow-wrap: anywhere;
 }
 
 .hero-description {
     max-width: 520px;
 
-    margin: 20px 0 24px;
+    margin: 17px 0 23px;
 
     color: var(--muted);
 
-    font-size: 15px;
+    font-size: 14px;
+    line-height: 1.8;
 }
 
 .hero-actions {
     display: flex;
     flex-wrap: wrap;
+
     gap: 10px;
 }
 
-.button {
-    min-height: 46px;
+/* ========================================
+   6. BUTTONS
+======================================== */
 
-    padding: 11px 18px;
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 46px;
+    max-width: 100%;
+
+    padding: 11px 17px;
 
     border: 1px solid transparent;
     border-radius: 12px;
@@ -195,11 +294,18 @@ a:focus-visible {
 
     font-size: 13px;
     font-weight: 800;
+
+    text-align: center;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        opacity 0.15s ease;
 }
 
 .button-primary {
     background: var(--accent);
-    color: #111827;
+    color: #171025;
 }
 
 .button-primary:active {
@@ -213,6 +319,19 @@ a:focus-visible {
     color: var(--text);
 }
 
+.button-secondary:active {
+    background: var(--surface-hover);
+}
+
+.button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   7. WORKSPACE SECTION
+======================================== */
+
 .workspace-section {
     margin-top: 8px;
 }
@@ -220,7 +339,6 @@ a:focus-visible {
 .section-heading,
 .panel-heading {
     display: flex;
-
     align-items: center;
     justify-content: space-between;
 
@@ -233,27 +351,39 @@ a:focus-visible {
 .panel-heading h2 {
     margin: 0;
 
-    font-size: 23px;
-    line-height: 1.3;
+    font-size: 21px;
+    line-height: 1.35;
+
+    letter-spacing: -0.5px;
 }
 
 .version-label {
+    flex-shrink: 0;
+
     color: var(--muted);
+
     font-size: 10px;
 }
+
+/* ========================================
+   8. FEATURE GRID
+======================================== */
 
 .feature-grid {
     display: grid;
 
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
 
     gap: 12px;
 }
 
 .feature-card {
-    min-width: 0;
+    position: relative;
 
-    padding: 16px;
+    min-width: 0;
+    padding: 18px;
+
+    overflow-wrap: anywhere;
 
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -263,16 +393,16 @@ a:focus-visible {
 
 .feature-icon {
     display: flex;
-
     align-items: center;
     justify-content: center;
 
-    width: 40px;
-    height: 40px;
+    width: 43px;
+    height: 43px;
 
-    margin-bottom: 12px;
+    margin-bottom: 13px;
 
-    border-radius: 12px;
+    border: 1px solid rgba(177, 140, 255, 0.15);
+    border-radius: 13px;
 
     background: var(--surface-light);
     color: var(--accent);
@@ -283,34 +413,50 @@ a:focus-visible {
 .feature-card h3 {
     margin: 0 0 8px;
 
-    font-size: 15px;
+    font-size: 16px;
+    line-height: 1.4;
 }
 
 .feature-card p {
-    margin: 0 0 16px;
+    margin: 0 0 15px;
 
     color: var(--muted);
 
     font-size: 12px;
-    line-height: 1.7;
+    line-height: 1.8;
+
+    overflow-wrap: anywhere;
 }
 
 .feature-status {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
 
-    padding: 4px 8px;
+    max-width: 100%;
+
+    padding: 4px 9px;
 
     border: 1px solid var(--border);
     border-radius: 999px;
 
+    background: rgba(255, 255, 255, 0.02);
     color: var(--muted);
 
     font-size: 10px;
+    font-weight: 700;
+
+    overflow-wrap: anywhere;
 }
 
+/* ========================================
+   9. PANELS
+======================================== */
+
 .workspace-panel {
-    margin-top: 26px;
-    padding: 18px;
+    min-width: 0;
+
+    margin-top: 22px;
+    padding: 17px;
 
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -320,15 +466,23 @@ a:focus-visible {
 
 .workspace-panel p {
     color: var(--muted);
+
     font-size: 13px;
+    line-height: 1.8;
 }
 
 .icon-button {
-    width: 36px;
-    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 42px;
+    height: 42px;
 
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
 
     background: var(--surface-light);
     color: var(--text);
@@ -338,21 +492,39 @@ a:focus-visible {
     font-size: 22px;
 }
 
+.icon-button:active {
+    background: var(--surface-hover);
+}
+
+/* ========================================
+   10. NOTICES
+======================================== */
+
 .notice {
     margin-top: 16px;
-    padding: 12px;
+    padding: 13px;
 
+    border: 1px solid var(--border);
     border-left: 3px solid var(--accent);
+
+    border-radius: 8px;
 
     background: var(--surface-light);
     color: var(--muted);
 
     font-size: 12px;
+    line-height: 1.8;
+
+    overflow-wrap: anywhere;
 }
 
+/* ========================================
+   11. PROJECT NOTE
+======================================== */
+
 .project-note {
-    margin-top: 30px;
-    padding: 20px;
+    margin-top: 26px;
+    padding: 18px;
 
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -362,20 +534,137 @@ a:focus-visible {
 
 .project-note h2 {
     margin: 0 0 8px;
+
     font-size: 18px;
+    line-height: 1.4;
 }
 
 .project-note p {
     margin: 0;
 
     color: var(--muted);
+
     font-size: 13px;
+    line-height: 1.8;
 }
+
+/* ========================================
+   12. FORM CONTROLS
+======================================== */
+
+input,
+select,
+textarea {
+    max-width: 100%;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: var(--background);
+    color: var(--text);
+}
+
+input,
+select {
+    min-height: 42px;
+    padding: 9px 11px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 90px;
+
+    padding: 11px;
+
+    resize: vertical;
+}
+
+input[type="file"] {
+    width: 100%;
+    min-height: 44px;
+
+    padding: 8px;
+
+    font-size: 12px;
+}
+
+input[type="range"] {
+    min-height: 30px;
+    padding: 0;
+
+    accent-color: var(--accent);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    width: 18px;
+    height: 18px;
+
+    accent-color: var(--accent);
+}
+
+label {
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+/* ========================================
+   13. TABLES AND RESULTS
+======================================== */
+
+table {
+    width: 100%;
+    max-width: 100%;
+
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 9px;
+
+    border-bottom: 1px solid var(--border);
+
+    text-align: left;
+    vertical-align: top;
+
+    font-size: 12px;
+
+    overflow-wrap: anywhere;
+}
+
+th {
+    color: var(--accent);
+    font-weight: 800;
+}
+
+td {
+    color: var(--muted);
+}
+
+pre,
+code {
+    max-width: 100%;
+
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+pre {
+    overflow-x: auto;
+}
+
+/* ========================================
+   14. FOOTER
+======================================== */
 
 .app-footer {
     padding: 22px 5%;
 
     border-top: 1px solid var(--border);
+
+    background: rgba(12, 16, 29, 0.75);
 
     text-align: center;
 
@@ -387,44 +676,32 @@ a:focus-visible {
     margin: 4px 0;
 }
 
-[hidden] {
-    display: none !important;
-}
-
-@media (min-width: 700px) {
-    .main-content {
-        padding-top: 46px;
-    }
-
-    .hero {
-        padding-top: 40px;
-        padding-bottom: 55px;
-    }
-
-    .feature-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 16px;
-    }
-
-    .feature-card {
-        padding: 20px;
-    }
-}
+/* ========================================
+   15. SMALL PHONES
+======================================== */
 
 @media (max-width: 360px) {
     .app-header {
+        gap: 7px;
+
         padding-right: 4%;
         padding-left: 4%;
     }
 
     .brand {
         gap: 7px;
+
         font-size: 15px;
+    }
+
+    .brand-icon {
+        width: 34px;
+        height: 34px;
     }
 
     .status-badge {
         padding: 4px 7px;
-        font-size: 10px;
+        font-size: 9px;
     }
 
     .main-content {
@@ -432,11 +709,94 @@ a:focus-visible {
         padding-left: 4%;
     }
 
-    .feature-grid {
-        grid-template-columns: 1fr;
+    .hero h1 {
+        font-size: 32px;
+        letter-spacing: -1.2px;
     }
 
-    .section-heading h2 {
-        font-size: 20px;
+    .section-heading h2,
+    .panel-heading h2 {
+        font-size: 19px;
+    }
+
+    .feature-card {
+        padding: 15px;
+    }
+
+    .workspace-panel {
+        padding: 13px;
+    }
+
+    .button {
+        padding-right: 13px;
+        padding-left: 13px;
+    }
+}
+
+/* ========================================
+   16. TABLETS AND DESKTOP
+======================================== */
+
+@media (min-width: 600px) {
+    .main-content {
+        padding-top: 34px;
+    }
+
+    .hero {
+        padding-top: 36px;
+        padding-bottom: 46px;
+    }
+
+    .feature-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        gap: 15px;
+    }
+
+    .feature-card {
+        padding: 20px;
+    }
+
+    .workspace-panel {
+        padding: 22px;
+    }
+}
+
+@media (min-width: 900px) {
+    .main-content {
+        padding-top: 42px;
+    }
+
+    .hero {
+        padding-top: 42px;
+        padding-bottom: 54px;
+    }
+
+    .feature-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+
+        gap: 17px;
+    }
+
+    .feature-card {
+        padding: 21px;
+    }
+}
+
+/* ========================================
+   17. REDUCED MOTION
+======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
     }
 }
