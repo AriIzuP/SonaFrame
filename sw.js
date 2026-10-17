@@ -1,7 +1,7 @@
 /*
 Project: SonaFrame
 File: sw.js
-Version: 0.2.0
+Version: 0.3.0
 
 Purpose:
 - Cache application files for offline use.
@@ -11,13 +11,14 @@ Purpose:
 
 "use strict";
 
-var CACHE_NAME = "sonaframe-shell-v0.2.0";
+var CACHE_NAME = "sonaframe-shell-v0.3.0";
 
 var APP_FILES = [
     "./",
     "./index.html",
     "./styles.css",
     "./app.js",
+    "./midi-merge.js",
     "./manifest.webmanifest",
     "./icon.svg"
 ];
