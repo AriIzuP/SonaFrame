@@ -11,7 +11,7 @@ Purpose:
 
 "use strict";
 
-var CACHE_NAME = "sonaframe-shell-v0.3.0";
+var CACHE_NAME = "sonaframe-shell-v0.4.0";
 
 var APP_FILES = [
     "./",
@@ -19,6 +19,7 @@ var APP_FILES = [
     "./styles.css",
     "./app.js",
     "./midi-merge.js",
+    "./midi-visualizer.js",
     "./manifest.webmanifest",
     "./icon.svg"
 ];
